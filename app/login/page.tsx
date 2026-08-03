@@ -39,7 +39,7 @@ export default function LoginPage() {
           autoFocus
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg bg-neutral-900 border border-neutral-800 px-3 py-2"
+          className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2"
           placeholder="Password"
         />
         {error && <p className="text-sm text-red-400">{error}</p>}

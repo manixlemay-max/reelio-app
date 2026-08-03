@@ -56,7 +56,7 @@ export default function SchedulePage() {
           <select
             value={videoId}
             onChange={(e) => setVideoId(e.target.value)}
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
           >
             {videos.map((v) => (
               <option key={v.id} value={v.id}>
@@ -68,7 +68,7 @@ export default function SchedulePage() {
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value as "tiktok" | "instagram")}
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
           >
             <option value="tiktok">TikTok</option>
             <option value="instagram">Instagram</option>
@@ -78,7 +78,7 @@ export default function SchedulePage() {
             value={hashtags}
             onChange={(e) => setHashtags(e.target.value)}
             placeholder="#ecommerce #ugc #myproduct"
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
           />
 
           <input
@@ -86,7 +86,7 @@ export default function SchedulePage() {
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
             required
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
           />
 
           <button

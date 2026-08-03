@@ -56,7 +56,7 @@ export default function VideosPage() {
           <select
             value={selectedProduct}
             onChange={(e) => setSelectedProduct(e.target.value)}
-            className="rounded-lg bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm"
+            className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
           >
             {products.map((p) => (
               <option key={p.id} value={p.id}>
