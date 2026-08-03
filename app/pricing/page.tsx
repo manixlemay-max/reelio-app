@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { TIERS } from "@/lib/pricing";
 
-export default function TarifsPage() {
+export default function PricingPage() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,10 +20,10 @@ export default function TarifsPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setError(data.error ?? "Erreur inconnue");
+        setError(data.error ?? "Unknown error");
       }
     } catch {
-      setError("Impossible de contacter le serveur de paiement.");
+      setError("Could not reach the payment server.");
     } finally {
       setLoadingTier(null);
     }
@@ -31,9 +31,9 @@ export default function TarifsPage() {
 
   return (
     <main className="flex-1 mx-auto max-w-5xl px-6 py-20 w-full">
-      <h1 className="text-3xl font-semibold text-center mb-2">Choisissez votre abonnement</h1>
+      <h1 className="text-3xl font-semibold text-center mb-2">Choose your plan</h1>
       <p className="text-neutral-400 text-center mb-12">
-        Annulable à tout moment. Le nombre de réseaux sociaux connectés dépend de votre palier.
+        Cancel anytime. The number of connected social networks depends on your plan.
       </p>
 
       {error && (
@@ -45,19 +45,19 @@ export default function TarifsPage() {
           <div key={tier.id} className="rounded-2xl border border-neutral-800 p-6 flex flex-col">
             <h3 className="font-medium mb-1">{tier.name}</h3>
             <p className="text-3xl font-semibold mb-4">
-              {tier.priceEur}€<span className="text-sm text-neutral-500 font-normal">/mois</span>
+              ${tier.priceUsd}<span className="text-sm text-neutral-500 font-normal">/mo</span>
             </p>
             <ul className="text-sm text-neutral-400 space-y-2 flex-1 mb-6">
-              <li>{tier.networksAllowed} réseau(x) connecté(s)</li>
-              <li>{tier.videosPerMonth} vidéos / mois</li>
-              <li>{tier.competitorAnalysis ? "Analyse concurrentielle incluse" : "Analyse de performance de base"}</li>
+              <li>{tier.networksAllowed} connected network(s)</li>
+              <li>{tier.videosPerMonth} videos / month</li>
+              <li>{tier.competitorAnalysis ? "Competitor analysis included" : "Basic performance analytics"}</li>
             </ul>
             <button
               onClick={() => subscribe(tier.id)}
               disabled={loadingTier === tier.id}
               className="rounded-full bg-emerald-500 text-neutral-950 px-4 py-2 text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-50"
             >
-              {loadingTier === tier.id ? "Redirection..." : `S'abonner à ${tier.name}`}
+              {loadingTier === tier.id ? "Redirecting..." : `Subscribe to ${tier.name}`}
             </button>
           </div>
         ))}

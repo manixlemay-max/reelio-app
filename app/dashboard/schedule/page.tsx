@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 type Video = { id: string; productName: string; status: string; videoUrl: string | null };
 type Post = { id: string; platform: string; hashtags: string; scheduledAt: string; status: string; productName: string };
 
-export default function PlanificationPage() {
+export default function SchedulePage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [videoId, setVideoId] = useState("");
@@ -47,10 +47,10 @@ export default function PlanificationPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-8">Planification</h1>
+      <h1 className="text-2xl font-semibold mb-8">Schedule</h1>
 
       {videos.length === 0 ? (
-        <p className="text-neutral-400 mb-8">Générez d&apos;abord une vidéo avant de la planifier.</p>
+        <p className="text-neutral-400 mb-8">Generate a video first before scheduling it.</p>
       ) : (
         <form onSubmit={onSubmit} className="space-y-4 max-w-lg mb-12">
           <select
@@ -77,7 +77,7 @@ export default function PlanificationPage() {
           <input
             value={hashtags}
             onChange={(e) => setHashtags(e.target.value)}
-            placeholder="#ecommerce #ugc #maproduit"
+            placeholder="#ecommerce #ugc #myproduct"
             className="w-full rounded-lg bg-neutral-900 border border-neutral-800 px-3 py-2 text-sm"
           />
 
@@ -94,12 +94,12 @@ export default function PlanificationPage() {
             disabled={submitting}
             className="rounded-full bg-emerald-500 text-neutral-950 px-5 py-2 text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-50"
           >
-            {submitting ? "Planification..." : "Planifier la publication"}
+            {submitting ? "Scheduling..." : "Schedule post"}
           </button>
         </form>
       )}
 
-      <h2 className="text-sm font-medium text-neutral-500 mb-3">Publications planifiées</h2>
+      <h2 className="text-sm font-medium text-neutral-500 mb-3">Scheduled posts</h2>
       <ul className="space-y-2">
         {posts.map((p) => (
           <li key={p.id} className="rounded-xl border border-neutral-800 p-4">
@@ -107,7 +107,7 @@ export default function PlanificationPage() {
               {p.productName} · {p.platform}
             </p>
             <p className="text-sm text-neutral-400">
-              {new Date(p.scheduledAt).toLocaleString("fr-FR")} · {p.status}
+              {new Date(p.scheduledAt).toLocaleString("en-US")} · {p.status}
             </p>
           </li>
         ))}

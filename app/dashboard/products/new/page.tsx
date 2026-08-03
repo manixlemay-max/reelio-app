@@ -25,21 +25,21 @@ export default function NewProductPage() {
       router.push("/dashboard/videos");
     } else {
       const data = await res.json();
-      setError(data.error ?? "Erreur inconnue");
+      setError(data.error ?? "Unknown error");
     }
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-8">Ajouter un produit</h1>
+      <h1 className="text-2xl font-semibold mb-8">Add a product</h1>
       <form onSubmit={onSubmit} className="space-y-5 max-w-lg">
-        <Field label="Nom du produit">
+        <Field label="Product name">
           <input
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded-lg bg-neutral-900 border border-neutral-800 px-3 py-2"
-            placeholder="Ex: Gourde isotherme 750ml"
+            placeholder="Ex: Insulated water bottle 25oz"
           />
         </Field>
         <Field label="Description">
@@ -49,10 +49,10 @@ export default function NewProductPage() {
             onChange={(e) => setDescription(e.target.value)}
             className="w-full rounded-lg bg-neutral-900 border border-neutral-800 px-3 py-2"
             rows={4}
-            placeholder="Ce qui rend ce produit intéressant pour une vidéo UGC"
+            placeholder="What makes this product interesting for a UGC video"
           />
         </Field>
-        <Field label="URL d'une image du produit (optionnel)">
+        <Field label="Product image URL (optional)">
           <input
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
@@ -66,7 +66,7 @@ export default function NewProductPage() {
           disabled={submitting}
           className="rounded-full bg-emerald-500 text-neutral-950 px-5 py-2 text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-50"
         >
-          {submitting ? "Ajout..." : "Ajouter le produit"}
+          {submitting ? "Adding..." : "Add product"}
         </button>
       </form>
     </div>

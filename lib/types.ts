@@ -44,7 +44,7 @@ export type AnalyticsRow = {
 export type Tier = {
   id: "starter" | "growth" | "pro";
   name: string;
-  priceEur: number;
+  priceUsd: number;
   networksAllowed: number;
   videosPerMonth: number;
   competitorAnalysis: boolean;

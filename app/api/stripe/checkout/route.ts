@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/dashboard?checkout=success`,
-    cancel_url: `${origin}/tarifs?checkout=cancel`,
+    cancel_url: `${origin}/pricing?checkout=cancel`,
   });
 
   return NextResponse.json({ url: session.url });

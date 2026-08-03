@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Reelio — Vidéos UGC IA pour e-commerce",
+  title: "Reelio — AI UGC videos for e-commerce",
   description:
-    "Abonnement qui génère, publie et analyse automatiquement vos vidéos UGC par IA sur TikTok et Instagram.",
+    "The subscription that generates, posts, and analyzes your AI UGC videos on TikTok and Instagram automatically.",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-neutral-950 text-neutral-100 font-sans">
         {children}
       </body>

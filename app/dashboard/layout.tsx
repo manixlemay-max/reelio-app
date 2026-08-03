@@ -1,11 +1,11 @@
 import Link from "next/link";
 
 const links = [
-  { href: "/dashboard", label: "Vue d'ensemble" },
-  { href: "/dashboard/produits/nouveau", label: "Ajouter un produit" },
-  { href: "/dashboard/videos", label: "Vidéos" },
-  { href: "/dashboard/planification", label: "Planification" },
-  { href: "/dashboard/analytique", label: "Analytique" },
+  { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/products/new", label: "Add a product" },
+  { href: "/dashboard/videos", label: "Videos" },
+  { href: "/dashboard/schedule", label: "Schedule" },
+  { href: "/dashboard/analytics", label: "Analytics" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

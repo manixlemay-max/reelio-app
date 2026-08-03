@@ -49,7 +49,7 @@ export default function VideosPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-8">Vidéos</h1>
+      <h1 className="text-2xl font-semibold mb-8">Videos</h1>
 
       {products.length > 0 && (
         <div className="flex items-center gap-3 mb-8">
@@ -69,7 +69,7 @@ export default function VideosPage() {
             disabled={generating}
             className="rounded-full bg-emerald-500 text-neutral-950 px-4 py-2 text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-50"
           >
-            {generating ? "Génération..." : "Générer une vidéo"}
+            {generating ? "Generating..." : "Generate a video"}
           </button>
         </div>
       )}
@@ -80,7 +80,7 @@ export default function VideosPage() {
             <div>
               <p className="font-medium">{v.productName}</p>
               <p className="text-sm text-neutral-400">
-                {v.status} · fournisseur: {v.provider}
+                {v.status} · provider: {v.provider}
               </p>
             </div>
             {v.videoUrl && (
@@ -89,7 +89,7 @@ export default function VideosPage() {
                 target="_blank"
                 className="text-sm text-emerald-400 hover:underline"
               >
-                Voir la vidéo
+                View video
               </a>
             )}
           </li>

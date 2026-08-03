@@ -1,12 +1,12 @@
 import { Tier } from "./types";
 
-// Paliers d'abonnement — ajuste les prix et limites selon tes coûts réels
-// (coût par vidéo du fournisseur IA + coût par profil connecté chez le fournisseur de publication).
+// Subscription tiers — adjust prices and limits based on your real costs
+// (AI video generation cost per video + posting provider cost per connected profile).
 export const TIERS: Tier[] = [
   {
     id: "starter",
     name: "Starter",
-    priceEur: 29,
+    priceUsd: 29,
     networksAllowed: 1,
     videosPerMonth: 10,
     competitorAnalysis: false,
@@ -15,7 +15,7 @@ export const TIERS: Tier[] = [
   {
     id: "growth",
     name: "Growth",
-    priceEur: 79,
+    priceUsd: 79,
     networksAllowed: 2,
     videosPerMonth: 30,
     competitorAnalysis: false,
@@ -24,7 +24,7 @@ export const TIERS: Tier[] = [
   {
     id: "pro",
     name: "Pro",
-    priceEur: 199,
+    priceUsd: 199,
     networksAllowed: 2,
     videosPerMonth: 100,
     competitorAnalysis: true,
