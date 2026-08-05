@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { schedulePost } from "@/lib/postingProvider";
 import { createPost, getVideo } from "@/lib/db";
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const video = await getVideo(body.videoId);

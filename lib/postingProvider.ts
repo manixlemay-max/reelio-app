@@ -41,22 +41,39 @@ async function findIntegrationId(apiKey: string, platform: Platform): Promise<st
   return match?.id ?? null;
 }
 
-async function uploadVideo(apiKey: string, videoUrl: string): Promise<{ id: string; path: string } | null> {
-  const videoRes = await fetch(videoUrl);
-  if (!videoRes.ok) return null;
+type UploadResult = { ok: true; id: string; path: string } | { ok: false; error: string };
+
+async function uploadVideo(apiKey: string, videoUrl: string): Promise<UploadResult> {
+  let videoRes: Response;
+  try {
+    videoRes = await fetch(videoUrl);
+  } catch (e) {
+    return { ok: false, error: `Could not fetch source video from ${videoUrl}: ${(e as Error).message}` };
+  }
+  if (!videoRes.ok) {
+    return { ok: false, error: `Source video URL returned ${videoRes.status}` };
+  }
   const blob = await videoRes.blob();
 
   const form = new FormData();
   form.append("file", blob, "video.mp4");
 
-  const res = await fetch(`${POSTIZ_BASE}/upload`, {
-    method: "POST",
-    headers: postizHeaders(apiKey),
-    body: form,
-  });
-  if (!res.ok) return null;
+  let res: Response;
+  try {
+    res = await fetch(`${POSTIZ_BASE}/upload`, {
+      method: "POST",
+      headers: postizHeaders(apiKey),
+      body: form,
+    });
+  } catch (e) {
+    return { ok: false, error: `Postiz upload request failed: ${(e as Error).message}` };
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    return { ok: false, error: `Postiz upload returned ${res.status}: ${text.slice(0, 300)}` };
+  }
   const data = await res.json();
-  return { id: data.id, path: data.path };
+  return { ok: true, id: data.id, path: data.path };
 }
 
 function buildSettings(platform: Platform, hashtags: string) {
@@ -113,8 +130,8 @@ export async function schedulePost(input: SchedulePostInput): Promise<SchedulePo
   }
 
   const media = await uploadVideo(apiKey, input.videoUrl);
-  if (!media) {
-    return { status: "failed", externalId: null, error: "Could not upload the video file to Postiz." };
+  if (!media.ok) {
+    return { status: "failed", externalId: null, error: media.error };
   }
 
   const settings = buildSettings(input.platform, input.hashtags);

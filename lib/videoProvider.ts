@@ -28,7 +28,7 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
     // sans dépendre d'un compte payant pendant le développement.
     return {
       status: "ready",
-      videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
       provider: "mock",
     };
   }
