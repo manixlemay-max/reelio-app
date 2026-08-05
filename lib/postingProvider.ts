@@ -46,7 +46,12 @@ type UploadResult = { ok: true; id: string; path: string } | { ok: false; error:
 async function uploadVideo(apiKey: string, videoUrl: string): Promise<UploadResult> {
   let videoRes: Response;
   try {
-    videoRes = await fetch(videoUrl);
+    videoRes = await fetch(videoUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; ReelioBot/1.0; +https://reelio.app)",
+        Accept: "*/*",
+      },
+    });
   } catch (e) {
     return { ok: false, error: `Could not fetch source video from ${videoUrl}: ${(e as Error).message}` };
   }
