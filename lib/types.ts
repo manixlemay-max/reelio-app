@@ -17,7 +17,7 @@ export type Video = {
   createdAt: string;
 };
 
-export type Platform = "tiktok" | "instagram";
+export type Platform = "tiktok" | "instagram" | "youtube";
 
 export type PostStatus = "scheduled" | "posted" | "failed";
 

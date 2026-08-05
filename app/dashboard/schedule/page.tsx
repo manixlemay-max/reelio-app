@@ -9,10 +9,11 @@ export default function SchedulePage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [videoId, setVideoId] = useState("");
-  const [platform, setPlatform] = useState<"tiktok" | "instagram">("tiktok");
+  const [platform, setPlatform] = useState<"tiktok" | "instagram" | "youtube">("tiktok");
   const [hashtags, setHashtags] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
     const [videosRes, postsRes] = await Promise.all([
@@ -34,14 +35,20 @@ export default function SchedulePage() {
     e.preventDefault();
     if (!videoId || !scheduledAt) return;
     setSubmitting(true);
-    await fetch("/api/schedule-post", {
+    setError(null);
+    const res = await fetch("/api/schedule-post", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ videoId, platform, hashtags, scheduledAt }),
     });
     setSubmitting(false);
-    setHashtags("");
-    setScheduledAt("");
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Something went wrong while scheduling this post.");
+    } else {
+      setHashtags("");
+      setScheduledAt("");
+    }
     refresh();
   }
 
@@ -56,7 +63,7 @@ export default function SchedulePage() {
           <select
             value={videoId}
             onChange={(e) => setVideoId(e.target.value)}
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
           >
             {videos.map((v) => (
               <option key={v.id} value={v.id}>
@@ -67,11 +74,12 @@ export default function SchedulePage() {
 
           <select
             value={platform}
-            onChange={(e) => setPlatform(e.target.value as "tiktok" | "instagram")}
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
+            onChange={(e) => setPlatform(e.target.value as "tiktok" | "instagram" | "youtube")}
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
           >
             <option value="tiktok">TikTok</option>
             <option value="instagram">Instagram</option>
+            <option value="youtube">YouTube</option>
           </select>
 
           <input
@@ -86,8 +94,12 @@ export default function SchedulePage() {
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
             required
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
           />
+
+          {error && (
+            <p className="text-sm text-red-400 whitespace-pre-wrap">{error}</p>
+          )}
 
           <button
             type="submit"

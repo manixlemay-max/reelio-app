@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const video = getVideo(body.videoId);
   if (!video || !video.videoUrl) {
-    return NextResponse.json({ error: "Vidéo introuvable ou pas encore prête" }, { status: 404 });
+    return NextResponse.json({ error: "Video not found or not ready yet" }, { status: 404 });
   }
 
   const result = await schedulePost({
@@ -23,6 +23,10 @@ export async function POST(req: NextRequest) {
     scheduledAt: body.scheduledAt,
     status: result.status === "scheduled" ? "scheduled" : "failed",
   });
+
+  if (result.status === "failed") {
+    return NextResponse.json({ post, error: result.error }, { status: 502 });
+  }
 
   return NextResponse.json({ post }, { status: 201 });
 }
