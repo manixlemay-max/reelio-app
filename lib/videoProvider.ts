@@ -29,9 +29,16 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
     // without a paid provider AND without depending on a third-party host that
     // might block server-to-server fetches (some hosts return 403 to fetches
     // without a browser-like origin).
-    const appUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    // Prefer an explicitly configured public URL, then Vercel's stable
+    // production domain, then the per-deployment URL, then localhost.
+    // (The per-deployment VERCEL_URL can be behind Vercel's deployment
+    // protection even when the main domain isn't, which would block our
+    // own server from fetching its own file.)
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+      "http://localhost:3000";
     return {
       status: "ready",
       videoUrl: `${appUrl}/demo-video.mp4`,
