@@ -1,162 +1,263 @@
-import Database from "better-sqlite3";
-import path from "path";
-import fs from "fs";
+import { neon } from "@neondatabase/serverless";
 import { randomUUID } from "crypto";
 import type { Product, Video, Post, AnalyticsRow, Platform } from "./types";
 
-const dataDir = process.env.VERCEL ? "/tmp/data" : path.join(process.cwd(), "data");
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+// Set on Vercel automatically once you connect a Postgres database under
+// Storage tab (Neon-backed). See README for the one-time setup.
+const connectionString =
+  process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.DATABASE_URL_UNPOOLED;
 
-const db = new Database(path.join(dataDir, "app.db"));
-db.pragma("journal_mode = WAL");
+function getSql() {
+  if (!connectionString) {
+    throw new Error(
+      "No database connected. Go to your Vercel project > Storage > Create Database > Postgres, then redeploy."
+    );
+  }
+  return neon(connectionString);
+}
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS products (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT NOT NULL,
-    imageUrl TEXT,
-    createdAt TEXT NOT NULL
-  );
+let schemaReady: Promise<void> | null = null;
 
-  CREATE TABLE IF NOT EXISTS videos (
-    id TEXT PRIMARY KEY,
-    productId TEXT NOT NULL,
-    videoUrl TEXT,
-    status TEXT NOT NULL,
-    provider TEXT NOT NULL,
-    createdAt TEXT NOT NULL
-  );
+function ensureSchema(): Promise<void> {
+  if (!schemaReady) {
+    const sql = getSql();
+    schemaReady = (async () => {
+      await sql`
+        CREATE TABLE IF NOT EXISTS products (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          image_url TEXT,
+          created_at TEXT NOT NULL
+        )
+      `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS videos (
+          id TEXT PRIMARY KEY,
+          product_id TEXT NOT NULL,
+          video_url TEXT,
+          status TEXT NOT NULL,
+          provider TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS posts (
+          id TEXT PRIMARY KEY,
+          video_id TEXT NOT NULL,
+          platform TEXT NOT NULL,
+          hashtags TEXT NOT NULL,
+          scheduled_at TEXT NOT NULL,
+          status TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+      `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS analytics (
+          id TEXT PRIMARY KEY,
+          post_id TEXT NOT NULL,
+          views INTEGER NOT NULL DEFAULT 0,
+          likes INTEGER NOT NULL DEFAULT 0,
+          comments INTEGER NOT NULL DEFAULT 0,
+          shares INTEGER NOT NULL DEFAULT 0,
+          captured_at TEXT NOT NULL
+        )
+      `;
+    })();
+  }
+  return schemaReady;
+}
 
-  CREATE TABLE IF NOT EXISTS posts (
-    id TEXT PRIMARY KEY,
-    videoId TEXT NOT NULL,
-    platform TEXT NOT NULL,
-    hashtags TEXT NOT NULL,
-    scheduledAt TEXT NOT NULL,
-    status TEXT NOT NULL,
-    createdAt TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS analytics (
-    id TEXT PRIMARY KEY,
-    postId TEXT NOT NULL,
-    views INTEGER NOT NULL DEFAULT 0,
-    likes INTEGER NOT NULL DEFAULT 0,
-    comments INTEGER NOT NULL DEFAULT 0,
-    shares INTEGER NOT NULL DEFAULT 0,
-    capturedAt TEXT NOT NULL
-  );
-`);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toProduct(row: any): Product {
+  return { id: row.id, name: row.name, description: row.description, imageUrl: row.image_url, createdAt: row.created_at };
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toVideo(row: any): Video {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    videoUrl: row.video_url,
+    status: row.status,
+    provider: row.provider,
+    createdAt: row.created_at,
+  };
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toPost(row: any): Post {
+  return {
+    id: row.id,
+    videoId: row.video_id,
+    platform: row.platform,
+    hashtags: row.hashtags,
+    scheduledAt: row.scheduled_at,
+    status: row.status,
+    createdAt: row.created_at,
+  };
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toAnalytics(row: any): AnalyticsRow {
+  return {
+    id: row.id,
+    postId: row.post_id,
+    views: row.views,
+    likes: row.likes,
+    comments: row.comments,
+    shares: row.shares,
+    capturedAt: row.captured_at,
+  };
+}
 
 // --- Products ---
-export function createProduct(input: { name: string; description: string; imageUrl?: string }): Product {
-  const product: Product = {
-    id: randomUUID(),
-    name: input.name,
-    description: input.description,
-    imageUrl: input.imageUrl ?? null,
-    createdAt: new Date().toISOString(),
-  };
-  db.prepare(
-    `INSERT INTO products (id, name, description, imageUrl, createdAt) VALUES (@id, @name, @description, @imageUrl, @createdAt)`
-  ).run(product);
-  return product;
+export async function createProduct(input: { name: string; description: string; imageUrl?: string }): Promise<Product> {
+  const sql = getSql();
+  await ensureSchema();
+  const id = randomUUID();
+  const createdAt = new Date().toISOString();
+  await sql`
+    INSERT INTO products (id, name, description, image_url, created_at)
+    VALUES (${id}, ${input.name}, ${input.description}, ${input.imageUrl ?? null}, ${createdAt})
+  `;
+  return { id, name: input.name, description: input.description, imageUrl: input.imageUrl ?? null, createdAt };
 }
 
-export function listProducts(): Product[] {
-  return db.prepare(`SELECT * FROM products ORDER BY createdAt DESC`).all() as Product[];
+export async function listProducts(): Promise<Product[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM products ORDER BY created_at DESC`;
+  return rows.map(toProduct);
 }
 
-export function getProduct(id: string): Product | undefined {
-  return db.prepare(`SELECT * FROM products WHERE id = ?`).get(id) as Product | undefined;
+export async function getProduct(id: string): Promise<Product | undefined> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM products WHERE id = ${id}`;
+  return rows[0] ? toProduct(rows[0]) : undefined;
 }
 
 // --- Videos ---
-export function createVideo(input: { productId: string; provider: string; status: Video["status"]; videoUrl?: string | null }): Video {
-  const video: Video = {
-    id: randomUUID(),
+export async function createVideo(input: {
+  productId: string;
+  provider: string;
+  status: Video["status"];
+  videoUrl?: string | null;
+}): Promise<Video> {
+  const sql = getSql();
+  await ensureSchema();
+  const id = randomUUID();
+  const createdAt = new Date().toISOString();
+  await sql`
+    INSERT INTO videos (id, product_id, video_url, status, provider, created_at)
+    VALUES (${id}, ${input.productId}, ${input.videoUrl ?? null}, ${input.status}, ${input.provider}, ${createdAt})
+  `;
+  return {
+    id,
     productId: input.productId,
     videoUrl: input.videoUrl ?? null,
     status: input.status,
     provider: input.provider,
-    createdAt: new Date().toISOString(),
+    createdAt,
   };
-  db.prepare(
-    `INSERT INTO videos (id, productId, videoUrl, status, provider, createdAt) VALUES (@id, @productId, @videoUrl, @status, @provider, @createdAt)`
-  ).run(video);
-  return video;
 }
 
-export function listVideos(): (Video & { productName: string })[] {
-  return db
-    .prepare(
-      `SELECT videos.*, products.name as productName FROM videos JOIN products ON products.id = videos.productId ORDER BY videos.createdAt DESC`
-    )
-    .all() as (Video & { productName: string })[];
+export async function listVideos(): Promise<(Video & { productName: string })[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`
+    SELECT videos.*, products.name as product_name
+    FROM videos JOIN products ON products.id = videos.product_id
+    ORDER BY videos.created_at DESC
+  `;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return rows.map((r: any) => ({ ...toVideo(r), productName: r.product_name }));
 }
 
-export function getVideo(id: string): Video | undefined {
-  return db.prepare(`SELECT * FROM videos WHERE id = ?`).get(id) as Video | undefined;
+export async function getVideo(id: string): Promise<Video | undefined> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM videos WHERE id = ${id}`;
+  return rows[0] ? toVideo(rows[0]) : undefined;
 }
 
 // --- Posts ---
-export function createPost(input: { videoId: string; platform: Platform; hashtags: string; scheduledAt: string; status: Post["status"] }): Post {
-  const post: Post = {
-    id: randomUUID(),
+export async function createPost(input: {
+  videoId: string;
+  platform: Platform;
+  hashtags: string;
+  scheduledAt: string;
+  status: Post["status"];
+}): Promise<Post> {
+  const sql = getSql();
+  await ensureSchema();
+  const id = randomUUID();
+  const createdAt = new Date().toISOString();
+  await sql`
+    INSERT INTO posts (id, video_id, platform, hashtags, scheduled_at, status, created_at)
+    VALUES (${id}, ${input.videoId}, ${input.platform}, ${input.hashtags}, ${input.scheduledAt}, ${input.status}, ${createdAt})
+  `;
+  return {
+    id,
     videoId: input.videoId,
     platform: input.platform,
     hashtags: input.hashtags,
     scheduledAt: input.scheduledAt,
     status: input.status,
-    createdAt: new Date().toISOString(),
+    createdAt,
   };
-  db.prepare(
-    `INSERT INTO posts (id, videoId, platform, hashtags, scheduledAt, status, createdAt) VALUES (@id, @videoId, @platform, @hashtags, @scheduledAt, @status, @createdAt)`
-  ).run(post);
-  return post;
 }
 
-export function listPosts(): (Post & { videoUrl: string | null; productName: string })[] {
-  return db
-    .prepare(
-      `SELECT posts.*, videos.videoUrl as videoUrl, products.name as productName
-       FROM posts
-       JOIN videos ON videos.id = posts.videoId
-       JOIN products ON products.id = videos.productId
-       ORDER BY posts.scheduledAt DESC`
-    )
-    .all() as (Post & { videoUrl: string | null; productName: string })[];
+export async function listPosts(): Promise<(Post & { videoUrl: string | null; productName: string })[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`
+    SELECT posts.*, videos.video_url as video_url, products.name as product_name
+    FROM posts
+    JOIN videos ON videos.id = posts.video_id
+    JOIN products ON products.id = videos.product_id
+    ORDER BY posts.scheduled_at DESC
+  `;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return rows.map((r: any) => ({ ...toPost(r), videoUrl: r.video_url, productName: r.product_name }));
 }
 
 // --- Analytics ---
-export function recordAnalytics(input: { postId: string; views: number; likes: number; comments: number; shares: number }): AnalyticsRow {
-  const row: AnalyticsRow = {
-    id: randomUUID(),
+export async function recordAnalytics(input: {
+  postId: string;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+}): Promise<AnalyticsRow> {
+  const sql = getSql();
+  await ensureSchema();
+  const id = randomUUID();
+  const capturedAt = new Date().toISOString();
+  await sql`
+    INSERT INTO analytics (id, post_id, views, likes, comments, shares, captured_at)
+    VALUES (${id}, ${input.postId}, ${input.views}, ${input.likes}, ${input.comments}, ${input.shares}, ${capturedAt})
+  `;
+  return {
+    id,
     postId: input.postId,
     views: input.views,
     likes: input.likes,
     comments: input.comments,
     shares: input.shares,
-    capturedAt: new Date().toISOString(),
+    capturedAt,
   };
-  db.prepare(
-    `INSERT INTO analytics (id, postId, views, likes, comments, shares, capturedAt) VALUES (@id, @postId, @views, @likes, @comments, @shares, @capturedAt)`
-  ).run(row);
-  return row;
 }
 
-export function listAnalytics(): (AnalyticsRow & { platform: Platform; productName: string })[] {
-  return db
-    .prepare(
-      `SELECT analytics.*, posts.platform as platform, products.name as productName
-       FROM analytics
-       JOIN posts ON posts.id = analytics.postId
-       JOIN videos ON videos.id = posts.videoId
-       JOIN products ON products.id = videos.productId
-       ORDER BY analytics.capturedAt DESC`
-    )
-    .all() as (AnalyticsRow & { platform: Platform; productName: string })[];
+export async function listAnalytics(): Promise<(AnalyticsRow & { platform: Platform; productName: string })[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`
+    SELECT analytics.*, posts.platform as platform, products.name as product_name
+    FROM analytics
+    JOIN posts ON posts.id = analytics.post_id
+    JOIN videos ON videos.id = posts.video_id
+    JOIN products ON products.id = videos.product_id
+    ORDER BY analytics.captured_at DESC
+  `;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return rows.map((r: any) => ({ ...toAnalytics(r), platform: r.platform, productName: r.product_name }));
 }
-
-export default db;

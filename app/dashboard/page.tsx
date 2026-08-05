@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { listProducts, listVideos, listPosts } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardOverviewPage() {
-  const products = listProducts();
-  const videos = listVideos();
-  const posts = listPosts();
+  const products = await listProducts();
+  const videos = await listVideos();
+  const posts = await listPosts();
 
   return (
     <div>

@@ -4,9 +4,9 @@ import { createVideo, getProduct } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const product = getProduct(body.productId);
+  const product = await getProduct(body.productId);
   if (!product) {
-    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
+    return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
   const result = await generateVideo({
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     imageUrl: product.imageUrl,
   });
 
-  const video = createVideo({
+  const video = await createVideo({
     productId: product.id,
     provider: result.provider,
     status: result.status,

@@ -4,7 +4,7 @@ import { createPost, getVideo } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const video = getVideo(body.videoId);
+  const video = await getVideo(body.videoId);
   if (!video || !video.videoUrl) {
     return NextResponse.json({ error: "Video not found or not ready yet" }, { status: 404 });
   }
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     scheduledAt: body.scheduledAt,
   });
 
-  const post = createPost({
+  const post = await createPost({
     videoId: video.id,
     platform: body.platform,
     hashtags: body.hashtags ?? "",

@@ -3,16 +3,15 @@ import { listAnalytics, listPosts, recordAnalytics } from "@/lib/db";
 import { suggestBestPostingTime } from "@/lib/postingProvider";
 
 export async function GET() {
-  let rows = listAnalytics();
+  let rows = await listAnalytics();
 
-  // Mode démo : si aucune donnée réelle n'a encore été collectée
-  // (ex: le fournisseur de publication ne renvoie pas encore de stats),
-  // on génère des chiffres d'exemple à partir des posts existants pour que
-  // le dashboard analytics soit visualisable dès le premier jour.
+  // Demo mode: if no real data has been collected yet (e.g. the posting
+  // provider doesn't report stats yet), generate sample numbers from
+  // existing posts so the analytics dashboard is viewable from day one.
   if (rows.length === 0) {
-    const posts = listPosts();
+    const posts = await listPosts();
     for (const post of posts) {
-      recordAnalytics({
+      await recordAnalytics({
         postId: post.id,
         views: Math.floor(Math.random() * 5000) + 100,
         likes: Math.floor(Math.random() * 400),
@@ -20,7 +19,7 @@ export async function GET() {
         shares: Math.floor(Math.random() * 40),
       });
     }
-    rows = listAnalytics();
+    rows = await listAnalytics();
   }
 
   const bestTimes = suggestBestPostingTime(
