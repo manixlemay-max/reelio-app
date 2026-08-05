@@ -23,12 +23,18 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
   const apiUrl = process.env.VIDEO_PROVIDER_API_URL; // ex: https://api.creatify.ai/api/v1/videos
 
   if (!apiKey || !apiUrl) {
-    // Mode démo : aucune clé configurée → on renvoie une vidéo d'exemple
-    // pour que le reste du produit (dashboard, planification, analytics) soit testable
-    // sans dépendre d'un compte payant pendant le développement.
+    // Demo mode: no key configured yet -> return a sample video hosted on this
+    // same app (public/demo-video.mp4) so the rest of the product (dashboard,
+    // scheduling, analytics, and the real Postiz posting flow) can be tested
+    // without a paid provider AND without depending on a third-party host that
+    // might block server-to-server fetches (some hosts return 403 to fetches
+    // without a browser-like origin).
+    const appUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     return {
       status: "ready",
-      videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      videoUrl: `${appUrl}/demo-video.mp4`,
       provider: "mock",
     };
   }
