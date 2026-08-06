@@ -1,10 +1,12 @@
-// Abstraction autour du fournisseur de génération vidéo IA (Creatify, HeyGen, etc.)
+// Integration with HeyGen (heygen.com) — AI video generation.
+// Docs used to build this: https://developers.heygen.com/docs/quick-start
 //
-// IMPORTANT: le corps de la requête/réponse ci-dessous est une structure GÉNÉRIQUE,
-// pas une copie exacte de l'API de Creatify ou HeyGen — vérifie et adapte les champs
-// exacts (endpoint, auth, format de payload) à la documentation officielle du
-// fournisseur au moment où tu obtiens ta clé API. C'est le seul endroit du code à
-// modifier pour brancher un vrai fournisseur.
+// Flow: prompt -> Video Agent session -> video_id -> poll video status.
+// This is async and can take longer than a single request, so generateVideo()
+// only *starts* the job and returns "pending". A separate checkVideoProgress()
+// call (used by /api/videos/[id]/refresh) polls until it's done.
+
+const HEYGEN_BASE = process.env.VIDEO_PROVIDER_API_URL || "https://api.heygen.com";
 
 type GenerateVideoInput = {
   productName: string;
@@ -16,13 +18,17 @@ type GenerateVideoResult = {
   status: "ready" | "pending" | "failed";
   videoUrl: string | null;
   provider: string;
+  externalJobId?: string | null;
 };
+
+function heygenHeaders(apiKey: string, extra?: Record<string, string>) {
+  return { "X-Api-Key": apiKey, ...(extra ?? {}) };
+}
 
 export async function generateVideo(input: GenerateVideoInput): Promise<GenerateVideoResult> {
   const apiKey = process.env.VIDEO_PROVIDER_API_KEY;
-  const apiUrl = process.env.VIDEO_PROVIDER_API_URL; // ex: https://api.creatify.ai/api/v1/videos
 
-  if (!apiKey || !apiUrl) {
+  if (!apiKey) {
     // Demo mode: no key configured yet -> return a sample video hosted on this
     // same app (public/demo-video.mp4) so the rest of the product (dashboard,
     // scheduling, analytics, and the real Postiz posting flow) can be tested
@@ -46,29 +52,62 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
     };
   }
 
-  const response = await fetch(apiUrl, {
+  const prompt = `A short, energetic UGC-style product video (under 30 seconds) for an
+e-commerce product called "${input.productName}". Product description: ${input.productDescription}.
+The video should feel like an authentic social media video promoting this product, with an
+enthusiastic presenter highlighting what makes it worth buying.`;
+
+  const res = await fetch(`${HEYGEN_BASE}/v3/video-agents`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      product_name: input.productName,
-      product_description: input.productDescription,
-      image_url: input.imageUrl ?? undefined,
-      style: "ugc",
-    }),
+    headers: heygenHeaders(apiKey, { "Content-Type": "application/json" }),
+    body: JSON.stringify({ prompt }),
   });
 
-  if (!response.ok) {
-    return { status: "failed", videoUrl: null, provider: "live" };
+  if (!res.ok) {
+    return { status: "failed", videoUrl: null, provider: "heygen" };
   }
 
-  const data = await response.json();
-  // Adapte ce mapping à la vraie forme de réponse du fournisseur choisi.
-  return {
-    status: data.status === "completed" ? "ready" : "pending",
-    videoUrl: data.video_url ?? null,
-    provider: "live",
-  };
+  const data = await res.json();
+  const sessionId = data?.data?.session_id ?? null;
+
+  if (!sessionId) {
+    return { status: "failed", videoUrl: null, provider: "heygen" };
+  }
+
+  return { status: "pending", videoUrl: null, provider: "heygen", externalJobId: sessionId };
+}
+
+type ProgressResult = { status: "ready" | "pending" | "failed"; videoUrl: string | null };
+
+// Called by /api/videos/[id]/refresh to check on a job started by generateVideo().
+export async function checkVideoProgress(sessionId: string): Promise<ProgressResult> {
+  const apiKey = process.env.VIDEO_PROVIDER_API_KEY;
+  if (!apiKey) return { status: "failed", videoUrl: null };
+
+  // Step 1: does the session have a video_id yet?
+  const sessionRes = await fetch(`${HEYGEN_BASE}/v3/video-agents/${sessionId}`, {
+    headers: heygenHeaders(apiKey),
+  });
+  if (!sessionRes.ok) return { status: "pending", videoUrl: null };
+
+  const sessionData = await sessionRes.json();
+  const videoId = sessionData?.data?.video_id ?? null;
+  if (!videoId) return { status: "pending", videoUrl: null };
+
+  // Step 2: is the video itself done rendering?
+  const videoRes = await fetch(`${HEYGEN_BASE}/v3/videos/${videoId}`, {
+    headers: heygenHeaders(apiKey),
+  });
+  if (!videoRes.ok) return { status: "pending", videoUrl: null };
+
+  const videoData = await videoRes.json();
+  const status = videoData?.data?.status;
+
+  if (status === "completed") {
+    return { status: "ready", videoUrl: videoData?.data?.video_url ?? null };
+  }
+  if (status === "failed") {
+    return { status: "failed", videoUrl: null };
+  }
+  return { status: "pending", videoUrl: null };
 }

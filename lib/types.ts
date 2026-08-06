@@ -14,6 +14,7 @@ export type Video = {
   videoUrl: string | null;
   status: VideoStatus;
   provider: string;
+  externalJobId: string | null;
   createdAt: string;
 };
 

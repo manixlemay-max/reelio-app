@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
     provider: result.provider,
     status: result.status,
     videoUrl: result.videoUrl,
+    externalJobId: result.externalJobId ?? null,
   });
 
   return NextResponse.json({ video }, { status: 201 });

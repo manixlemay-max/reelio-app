@@ -38,9 +38,12 @@ function ensureSchema(): Promise<void> {
           video_url TEXT,
           status TEXT NOT NULL,
           provider TEXT NOT NULL,
+          external_job_id TEXT,
           created_at TEXT NOT NULL
         )
       `;
+      // Backfill for databases created before this column existed.
+      await sql`ALTER TABLE videos ADD COLUMN IF NOT EXISTS external_job_id TEXT`;
       await sql`
         CREATE TABLE IF NOT EXISTS posts (
           id TEXT PRIMARY KEY,
@@ -80,6 +83,7 @@ function toVideo(row: any): Video {
     videoUrl: row.video_url,
     status: row.status,
     provider: row.provider,
+    externalJobId: row.external_job_id,
     createdAt: row.created_at,
   };
 }
@@ -141,14 +145,15 @@ export async function createVideo(input: {
   provider: string;
   status: Video["status"];
   videoUrl?: string | null;
+  externalJobId?: string | null;
 }): Promise<Video> {
   const sql = getSql();
   await ensureSchema();
   const id = randomUUID();
   const createdAt = new Date().toISOString();
   await sql`
-    INSERT INTO videos (id, product_id, video_url, status, provider, created_at)
-    VALUES (${id}, ${input.productId}, ${input.videoUrl ?? null}, ${input.status}, ${input.provider}, ${createdAt})
+    INSERT INTO videos (id, product_id, video_url, status, provider, external_job_id, created_at)
+    VALUES (${id}, ${input.productId}, ${input.videoUrl ?? null}, ${input.status}, ${input.provider}, ${input.externalJobId ?? null}, ${createdAt})
   `;
   return {
     id,
@@ -156,8 +161,20 @@ export async function createVideo(input: {
     videoUrl: input.videoUrl ?? null,
     status: input.status,
     provider: input.provider,
+    externalJobId: input.externalJobId ?? null,
     createdAt,
   };
+}
+
+export async function updateVideo(
+  id: string,
+  input: { status: Video["status"]; videoUrl?: string | null }
+): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`
+    UPDATE videos SET status = ${input.status}, video_url = ${input.videoUrl ?? null} WHERE id = ${id}
+  `;
 }
 
 export async function listVideos(): Promise<(Video & { productName: string })[]> {
