@@ -66,6 +66,18 @@ function ensureSchema(): Promise<void> {
           captured_at TEXT NOT NULL
         )
       `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS leads (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          business_name TEXT NOT NULL,
+          product_description TEXT NOT NULL,
+          social_handles TEXT,
+          notes TEXT,
+          created_at TEXT NOT NULL
+        )
+      `;
     })();
   }
   return schemaReady;
@@ -277,4 +289,66 @@ export async function listAnalytics(): Promise<(AnalyticsRow & { platform: Platf
   `;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return rows.map((r: any) => ({ ...toAnalytics(r), platform: r.platform, productName: r.product_name }));
+}
+
+
+// --- Leads (new client sign-ups from the public /welcome form) ---
+export type Lead = {
+  id: string;
+  name: string;
+  email: string;
+  businessName: string;
+  productDescription: string;
+  socialHandles: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toLead(row: any): Lead {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    businessName: row.business_name,
+    productDescription: row.product_description,
+    socialHandles: row.social_handles,
+    notes: row.notes,
+    createdAt: row.created_at,
+  };
+}
+
+export async function createLead(input: {
+  name: string;
+  email: string;
+  businessName: string;
+  productDescription: string;
+  socialHandles?: string;
+  notes?: string;
+}): Promise<Lead> {
+  const sql = getSql();
+  await ensureSchema();
+  const id = randomUUID();
+  const createdAt = new Date().toISOString();
+  await sql`
+    INSERT INTO leads (id, name, email, business_name, product_description, social_handles, notes, created_at)
+    VALUES (${id}, ${input.name}, ${input.email}, ${input.businessName}, ${input.productDescription}, ${input.socialHandles ?? null}, ${input.notes ?? null}, ${createdAt})
+  `;
+  return {
+    id,
+    name: input.name,
+    email: input.email,
+    businessName: input.businessName,
+    productDescription: input.productDescription,
+    socialHandles: input.socialHandles ?? null,
+    notes: input.notes ?? null,
+    createdAt,
+  };
+}
+
+export async function listLeads(): Promise<Lead[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM leads ORDER BY created_at DESC`;
+  return rows.map(toLead);
 }
