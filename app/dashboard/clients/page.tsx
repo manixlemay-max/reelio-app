@@ -1,4 +1,5 @@
 import { listLeads, listSubscriptions } from "@/lib/db";
+import LeadIntegrations from "@/components/LeadIntegrations";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ export default async function ClientsPage() {
                 {lead.notes && (
                   <p className="text-xs text-neutral-500 mt-1">Notes: {lead.notes}</p>
                 )}
+                <LeadIntegrations lead={lead} />
               </div>
             );
           })}

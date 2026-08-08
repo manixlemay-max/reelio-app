@@ -3,6 +3,7 @@ export type Product = {
   name: string;
   description: string;
   imageUrl: string | null;
+  leadId: string | null;
   createdAt: string;
 };
 

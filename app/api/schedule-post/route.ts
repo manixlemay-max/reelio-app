@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { schedulePost } from "@/lib/postingProvider";
-import { createPost, getVideo } from "@/lib/db";
+import { createPost, getVideo, getProduct, getLead } from "@/lib/db";
+import type { Platform } from "@/lib/types";
 
 export const maxDuration = 60;
+
+function integrationIdForPlatform(
+  lead: { tiktokIntegrationId: string | null; instagramIntegrationId: string | null; youtubeIntegrationId: string | null },
+  platform: Platform
+): string | null {
+  if (platform === "tiktok") return lead.tiktokIntegrationId;
+  if (platform === "instagram") return lead.instagramIntegrationId;
+  if (platform === "youtube") return lead.youtubeIntegrationId;
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -11,11 +22,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Video not found or not ready yet" }, { status: 404 });
   }
 
+  // If this product belongs to a specific client, make sure we post to
+  // THAT client's own connected account instead of a random one.
+  let integrationId: string | null = null;
+  const product = await getProduct(video.productId);
+  if (product?.leadId) {
+    const lead = await getLead(product.leadId);
+    if (!lead) {
+      return NextResponse.json({ error: "Linked client not found" }, { status: 404 });
+    }
+    integrationId = integrationIdForPlatform(lead, body.platform);
+    if (!integrationId) {
+      return NextResponse.json(
+        {
+          error: `${lead.businessName} doesn't have a ${body.platform} account connected yet. Go to Dashboard > Clients and link it first.`,
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   const result = await schedulePost({
     videoUrl: video.videoUrl,
     platform: body.platform,
     hashtags: body.hashtags ?? "",
     scheduledAt: body.scheduledAt,
+    integrationId,
   });
 
   const post = await createPost({

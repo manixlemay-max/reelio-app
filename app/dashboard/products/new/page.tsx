@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
+type Lead = { id: string; businessName: string };
 
 export default function NewProductPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [leadId, setLeadId] = useState("");
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/leads")
+      .then((res) => res.json())
+      .then((data) => setLeads(data.leads ?? []))
+      .catch(() => setLeads([]));
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -18,7 +29,7 @@ export default function NewProductPage() {
     const res = await fetch("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, description, imageUrl }),
+      body: JSON.stringify({ name, description, imageUrl, leadId: leadId || null }),
     });
     setSubmitting(false);
     if (res.ok) {
@@ -33,6 +44,20 @@ export default function NewProductPage() {
     <div>
       <h1 className="text-2xl font-semibold mb-8">Add a product</h1>
       <form onSubmit={onSubmit} className="space-y-5 max-w-lg">
+        <Field label="Client (optional — leave blank for your own testing)">
+          <select
+            value={leadId}
+            onChange={(e) => setLeadId(e.target.value)}
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2"
+          >
+            <option value="">No client (internal test)</option>
+            {leads.map((lead) => (
+              <option key={lead.id} value={lead.id}>
+                {lead.businessName}
+              </option>
+            ))}
+          </select>
+        </Field>
         <Field label="Product name">
           <input
             required

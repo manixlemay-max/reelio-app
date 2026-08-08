@@ -14,6 +14,9 @@ type SchedulePostInput = {
   platform: Platform;
   hashtags: string;
   scheduledAt: string; // ISO string
+  // If provided, skip auto-detection and post to this specific client's
+  // connected account instead of the first matching one found.
+  integrationId?: string | null;
 };
 
 type SchedulePostResult = {
@@ -22,7 +25,7 @@ type SchedulePostResult = {
   error?: string;
 };
 
-type Integration = {
+export type Integration = {
   id: string;
   identifier: string;
   name: string;
@@ -39,6 +42,16 @@ async function findIntegrationId(apiKey: string, platform: Platform): Promise<st
   const integrations = (await res.json()) as Integration[];
   const match = integrations.find((i) => i.identifier === platform && !i.disabled);
   return match?.id ?? null;
+}
+
+// Lists every social account connected under this Postiz workspace, so the
+// dashboard can let Manix pick which one belongs to which client.
+export async function listIntegrations(): Promise<Integration[] | null> {
+  const apiKey = process.env.POSTING_PROVIDER_API_KEY;
+  if (!apiKey) return null;
+  const res = await fetch(`${POSTIZ_BASE}/integrations`, { headers: postizHeaders(apiKey) });
+  if (!res.ok) return null;
+  return (await res.json()) as Integration[];
 }
 
 type UploadResult = { ok: true; id: string; path: string } | { ok: false; error: string };
@@ -125,7 +138,7 @@ export async function schedulePost(input: SchedulePostInput): Promise<SchedulePo
     return { status: "scheduled", externalId: `mock-${Date.now()}` };
   }
 
-  const integrationId = await findIntegrationId(apiKey, input.platform);
+  const integrationId = input.integrationId || (await findIntegrationId(apiKey, input.platform));
   if (!integrationId) {
     return {
       status: "failed",

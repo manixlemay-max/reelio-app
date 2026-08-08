@@ -90,6 +90,13 @@ function ensureSchema(): Promise<void> {
           updated_at TEXT NOT NULL
         )
       `;
+      // Link each product to the client (lead) it belongs to, so posts go to
+      // that client's own social accounts instead of a random connected one.
+      await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS lead_id TEXT`;
+      // Each client's own Postiz integration IDs, one per platform.
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS tiktok_integration_id TEXT`;
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS instagram_integration_id TEXT`;
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS youtube_integration_id TEXT`;
     })();
   }
   return schemaReady;
@@ -97,7 +104,14 @@ function ensureSchema(): Promise<void> {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toProduct(row: any): Product {
-  return { id: row.id, name: row.name, description: row.description, imageUrl: row.image_url, createdAt: row.created_at };
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    imageUrl: row.image_url,
+    leadId: row.lead_id ?? null,
+    createdAt: row.created_at,
+  };
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toVideo(row: any): Video {
@@ -137,16 +151,28 @@ function toAnalytics(row: any): AnalyticsRow {
 }
 
 // --- Products ---
-export async function createProduct(input: { name: string; description: string; imageUrl?: string }): Promise<Product> {
+export async function createProduct(input: {
+  name: string;
+  description: string;
+  imageUrl?: string;
+  leadId?: string | null;
+}): Promise<Product> {
   const sql = getSql();
   await ensureSchema();
   const id = randomUUID();
   const createdAt = new Date().toISOString();
   await sql`
-    INSERT INTO products (id, name, description, image_url, created_at)
-    VALUES (${id}, ${input.name}, ${input.description}, ${input.imageUrl ?? null}, ${createdAt})
+    INSERT INTO products (id, name, description, image_url, lead_id, created_at)
+    VALUES (${id}, ${input.name}, ${input.description}, ${input.imageUrl ?? null}, ${input.leadId ?? null}, ${createdAt})
   `;
-  return { id, name: input.name, description: input.description, imageUrl: input.imageUrl ?? null, createdAt };
+  return {
+    id,
+    name: input.name,
+    description: input.description,
+    imageUrl: input.imageUrl ?? null,
+    leadId: input.leadId ?? null,
+    createdAt,
+  };
 }
 
 export async function listProducts(): Promise<Product[]> {
@@ -313,6 +339,9 @@ export type Lead = {
   productDescription: string;
   socialHandles: string | null;
   notes: string | null;
+  tiktokIntegrationId: string | null;
+  instagramIntegrationId: string | null;
+  youtubeIntegrationId: string | null;
   createdAt: string;
 };
 
@@ -326,6 +355,9 @@ function toLead(row: any): Lead {
     productDescription: row.product_description,
     socialHandles: row.social_handles,
     notes: row.notes,
+    tiktokIntegrationId: row.tiktok_integration_id ?? null,
+    instagramIntegrationId: row.instagram_integration_id ?? null,
+    youtubeIntegrationId: row.youtube_integration_id ?? null,
     createdAt: row.created_at,
   };
 }
@@ -354,6 +386,9 @@ export async function createLead(input: {
     productDescription: input.productDescription,
     socialHandles: input.socialHandles ?? null,
     notes: input.notes ?? null,
+    tiktokIntegrationId: null,
+    instagramIntegrationId: null,
+    youtubeIntegrationId: null,
     createdAt,
   };
 }
@@ -363,6 +398,41 @@ export async function listLeads(): Promise<Lead[]> {
   await ensureSchema();
   const rows = await sql`SELECT * FROM leads ORDER BY created_at DESC`;
   return rows.map(toLead);
+}
+
+export async function getLead(id: string): Promise<Lead | undefined> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM leads WHERE id = ${id}`;
+  return rows[0] ? toLead(rows[0]) : undefined;
+}
+
+// Save which Postiz-connected account (integration id) belongs to this
+// client, per platform. Leave a field undefined to leave it unchanged.
+export async function updateLeadIntegrations(
+  id: string,
+  input: {
+    tiktokIntegrationId?: string | null;
+    instagramIntegrationId?: string | null;
+    youtubeIntegrationId?: string | null;
+  }
+): Promise<Lead | undefined> {
+  const sql = getSql();
+  await ensureSchema();
+  const existing = await getLead(id);
+  if (!existing) return undefined;
+  const tiktok = input.tiktokIntegrationId !== undefined ? input.tiktokIntegrationId : existing.tiktokIntegrationId;
+  const instagram =
+    input.instagramIntegrationId !== undefined ? input.instagramIntegrationId : existing.instagramIntegrationId;
+  const youtube = input.youtubeIntegrationId !== undefined ? input.youtubeIntegrationId : existing.youtubeIntegrationId;
+  await sql`
+    UPDATE leads
+    SET tiktok_integration_id = ${tiktok},
+        instagram_integration_id = ${instagram},
+        youtube_integration_id = ${youtube}
+    WHERE id = ${id}
+  `;
+  return { ...existing, tiktokIntegrationId: tiktok, instagramIntegrationId: instagram, youtubeIntegrationId: youtube };
 }
 
 

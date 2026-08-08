@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
     name: body.name,
     description: body.description,
     imageUrl: body.imageUrl,
+    leadId: body.leadId || null,
   });
   return NextResponse.json({ product }, { status: 201 });
 }
