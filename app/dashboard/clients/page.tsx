@@ -1,9 +1,17 @@
-import { listLeads } from "@/lib/db";
+import { listLeads, listSubscriptions } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+function statusBadge(status: string | undefined) {
+  if (!status) return { text: "No subscription found", color: "text-neutral-500" };
+  if (status === "active" || status === "trialing") return { text: `Active (${status})`, color: "text-green-400" };
+  if (status === "canceled") return { text: "Canceled", color: "text-red-400" };
+  return { text: status, color: "text-yellow-400" };
+}
+
 export default async function ClientsPage() {
-  const leads = await listLeads();
+  const [leads, subscriptions] = await Promise.all([listLeads(), listSubscriptions()]);
+  const subsByEmail = new Map(subscriptions.map((s) => [s.email?.toLowerCase(), s]));
 
   return (
     <div>
@@ -15,28 +23,33 @@ export default async function ClientsPage() {
         </p>
       ) : (
         <div className="space-y-4">
-          {leads.map((lead) => (
-            <div key={lead.id} className="rounded-lg border border-neutral-800 p-4">
-              <div className="flex items-baseline justify-between mb-2">
-                <h2 className="font-medium">{lead.businessName}</h2>
-                <span className="text-xs text-neutral-500">
-                  {new Date(lead.createdAt).toLocaleString()}
-                </span>
+          {leads.map((lead) => {
+            const sub = subsByEmail.get(lead.email.toLowerCase());
+            const badge = statusBadge(sub?.status);
+            return (
+              <div key={lead.id} className="rounded-lg border border-neutral-800 p-4">
+                <div className="flex items-baseline justify-between mb-2">
+                  <h2 className="font-medium">{lead.businessName}</h2>
+                  <span className="text-xs text-neutral-500">
+                    {new Date(lead.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-sm text-neutral-400 mb-1">
+                  {lead.name} &middot; {lead.email}
+                </p>
+                <p className={`text-xs font-medium mb-2 ${badge.color}`}>{badge.text}</p>
+                <p className="text-sm text-neutral-300 mb-2 whitespace-pre-wrap">
+                  {lead.productDescription}
+                </p>
+                {lead.socialHandles && (
+                  <p className="text-xs text-neutral-500">Socials: {lead.socialHandles}</p>
+                )}
+                {lead.notes && (
+                  <p className="text-xs text-neutral-500 mt-1">Notes: {lead.notes}</p>
+                )}
               </div>
-              <p className="text-sm text-neutral-400 mb-1">
-                {lead.name} &middot; {lead.email}
-              </p>
-              <p className="text-sm text-neutral-300 mb-2 whitespace-pre-wrap">
-                {lead.productDescription}
-              </p>
-              {lead.socialHandles && (
-                <p className="text-xs text-neutral-500">Socials: {lead.socialHandles}</p>
-              )}
-              {lead.notes && (
-                <p className="text-xs text-neutral-500 mt-1">Notes: {lead.notes}</p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -78,6 +78,18 @@ function ensureSchema(): Promise<void> {
           created_at TEXT NOT NULL
         )
       `;
+      await sql`
+        CREATE TABLE IF NOT EXISTS subscriptions (
+          id TEXT PRIMARY KEY,
+          customer_id TEXT NOT NULL,
+          email TEXT,
+          tier_id TEXT,
+          status TEXT NOT NULL,
+          current_period_end TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `;
     })();
   }
   return schemaReady;
@@ -351,4 +363,71 @@ export async function listLeads(): Promise<Lead[]> {
   await ensureSchema();
   const rows = await sql`SELECT * FROM leads ORDER BY created_at DESC`;
   return rows.map(toLead);
+}
+
+
+// --- Subscriptions (kept in sync from Stripe webhooks) ---
+export type Subscription = {
+  id: string;
+  customerId: string;
+  email: string | null;
+  tierId: string | null;
+  status: string;
+  currentPeriodEnd: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toSubscription(row: any): Subscription {
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    email: row.email,
+    tierId: row.tier_id,
+    status: row.status,
+    currentPeriodEnd: row.current_period_end,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+// Insert or update a subscription row keyed by Stripe subscription id.
+// Fields left undefined are not overwritten on conflict.
+export async function upsertSubscription(input: {
+  id: string;
+  customerId: string;
+  email?: string | null;
+  tierId?: string | null;
+  status: string;
+  currentPeriodEnd?: string | null;
+}): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  const now = new Date().toISOString();
+  await sql`
+    INSERT INTO subscriptions (id, customer_id, email, tier_id, status, current_period_end, created_at, updated_at)
+    VALUES (${input.id}, ${input.customerId}, ${input.email ?? null}, ${input.tierId ?? null}, ${input.status}, ${input.currentPeriodEnd ?? null}, ${now}, ${now})
+    ON CONFLICT (id) DO UPDATE SET
+      customer_id = EXCLUDED.customer_id,
+      email = COALESCE(EXCLUDED.email, subscriptions.email),
+      tier_id = COALESCE(EXCLUDED.tier_id, subscriptions.tier_id),
+      status = EXCLUDED.status,
+      current_period_end = COALESCE(EXCLUDED.current_period_end, subscriptions.current_period_end),
+      updated_at = ${now}
+  `;
+}
+
+export async function listSubscriptions(): Promise<Subscription[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM subscriptions ORDER BY updated_at DESC`;
+  return rows.map(toSubscription);
+}
+
+export async function getSubscriptionByEmail(email: string): Promise<Subscription | undefined> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM subscriptions WHERE email = ${email} ORDER BY updated_at DESC LIMIT 1`;
+  return rows[0] ? toSubscription(rows[0]) : undefined;
 }
