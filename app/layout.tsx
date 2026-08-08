@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,6 +17,13 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-neutral-950 text-neutral-100 font-sans">
         {children}
+        <footer className="border-t border-neutral-900 py-6 px-6">
+          <div className="mx-auto max-w-5xl flex flex-wrap gap-4 justify-center text-xs text-neutral-500">
+            <Link href="/terms" className="hover:text-neutral-300 transition">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-neutral-300 transition">Privacy Policy</Link>
+            <Link href="/refund-policy" className="hover:text-neutral-300 transition">Refund Policy</Link>
+          </div>
+        </footer>
       </body>
     </html>
   );
