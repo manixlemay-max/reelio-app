@@ -49,7 +49,7 @@ export default function PrivacyPage() {
 
       <h2 className="text-lg font-medium text-neutral-100 mt-8 mb-2">6. Contact</h2>
       <p className="mb-4">
-        Questions about this policy? Contact us at [your contact email].
+        Questions about this policy? Contact us at firecandyyy@gmail.com.
       </p>
     </main>
   );

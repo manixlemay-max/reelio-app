@@ -30,7 +30,7 @@ export default function RefundPolicyPage() {
       <h2 className="text-lg font-medium text-neutral-100 mt-8 mb-2">Contact</h2>
       <p className="mb-4">
         To request a refund review or cancel your subscription, contact us at
-        [your contact email].
+        firecandyyy@gmail.com.
       </p>
     </main>
   );

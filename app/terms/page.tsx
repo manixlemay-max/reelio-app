@@ -8,7 +8,7 @@ export default function TermsPage() {
 
       <p className="mb-4">
         These Terms of Service ("Terms") govern your use of Reelio (the "Service"), operated
-        by [Your business legal name] ("we", "us", "our"). By subscribing to or using the
+        by Reelio ("we", "us", "our"). By subscribing to or using the
         Service, you agree to these Terms.
       </p>
 
@@ -70,7 +70,7 @@ export default function TermsPage() {
 
       <h2 className="text-lg font-medium text-neutral-100 mt-8 mb-2">8. Contact</h2>
       <p className="mb-4">
-        Questions about these Terms? Contact us at [your contact email].
+        Questions about these Terms? Contact us at firecandyyy@gmail.com.
       </p>
     </main>
   );
