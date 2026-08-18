@@ -15,7 +15,7 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
       </p>
       <button
         onClick={() => reset()}
-        className="rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition"
+        className="rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-500 transition"
       >
         Try again
       </button>

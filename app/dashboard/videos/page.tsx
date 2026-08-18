@@ -135,7 +135,7 @@ export default function VideosPage() {
             <button
               onClick={generate}
               disabled={generating}
-              className="rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition disabled:opacity-50"
+              className="rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-500 transition disabled:opacity-50"
             >
               {generating ? "Starting..." : "Generate a video"}
             </button>
@@ -168,7 +168,7 @@ export default function VideosPage() {
                         key={g}
                         onClick={() => setGenderFilter(g)}
                         className={`px-2.5 py-1.5 capitalize transition ${
-                          genderFilter === g ? "bg-indigo-600 text-white" : "text-neutral-500 hover:bg-neutral-900"
+                          genderFilter === g ? "bg-blue-600 text-white" : "text-neutral-500 hover:bg-neutral-900"
                         }`}
                       >
                         {g}
@@ -182,7 +182,7 @@ export default function VideosPage() {
                 <button
                   onClick={() => setSelectedAvatarId("")}
                   className={`flex flex-col items-center justify-center gap-1 w-20 h-24 rounded-lg border p-2 transition shrink-0 ${
-                    selectedAvatarId === "" ? "border-indigo-400 bg-indigo-600/10" : "border-neutral-800 hover:border-neutral-700"
+                    selectedAvatarId === "" ? "border-blue-400 bg-blue-600/10" : "border-neutral-800 hover:border-neutral-700"
                   }`}
                 >
                   <span className="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center text-lg">✨</span>
@@ -194,7 +194,7 @@ export default function VideosPage() {
                     onClick={() => setSelectedAvatarId(a.id)}
                     title={a.name}
                     className={`flex flex-col items-center gap-1 w-20 rounded-lg border p-2 transition shrink-0 ${
-                      selectedAvatarId === a.id ? "border-indigo-400 bg-indigo-600/10" : "border-neutral-800 hover:border-neutral-700"
+                      selectedAvatarId === a.id ? "border-blue-400 bg-blue-600/10" : "border-neutral-800 hover:border-neutral-700"
                     }`}
                   >
                     {a.previewImageUrl ? (

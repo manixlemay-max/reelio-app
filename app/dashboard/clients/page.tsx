@@ -71,7 +71,7 @@ export default async function ClientsPage() {
                   {(productsByLead.get(lead.id) ?? []).length === 0 ? (
                     <p className="text-xs text-neutral-600">
                       None linked yet —{" "}
-                      <Link href="/dashboard/products" className="text-indigo-400 hover:underline">
+                      <Link href="/dashboard/products" className="text-blue-400 hover:underline">
                         link one on the Products page
                       </Link>
                       .
@@ -92,7 +92,7 @@ export default async function ClientsPage() {
                   <a
                     href={`${baseUrl}/report/${tokenByLeadId.get(lead.id)}`}
                     target="_blank"
-                    className="text-indigo-400 hover:underline"
+                    className="text-blue-400 hover:underline"
                   >
                     {baseUrl}/report/{tokenByLeadId.get(lead.id)}
                   </a>

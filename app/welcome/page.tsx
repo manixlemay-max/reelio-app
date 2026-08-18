@@ -112,7 +112,7 @@ function WelcomeForm() {
             },
           ].map((step, i) => (
             <li key={i} className="flex gap-4">
-              <span className="shrink-0 w-7 h-7 rounded-full bg-indigo-600 text-white text-sm font-medium flex items-center justify-center">
+              <span className="shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-medium flex items-center justify-center">
                 {i + 1}
               </span>
               <div>
@@ -142,7 +142,7 @@ function WelcomeForm() {
                   onClick={() => toggleSelect(platform)}
                   disabled={disabled}
                   className={`rounded-full border px-4 py-2 text-sm capitalize transition disabled:opacity-40 ${
-                    selected ? "border-indigo-400 bg-indigo-600/10" : "border-neutral-800 hover:border-neutral-700"
+                    selected ? "border-blue-400 bg-blue-600/10" : "border-neutral-800 hover:border-neutral-700"
                   }`}
                 >
                   {platform}
@@ -157,7 +157,7 @@ function WelcomeForm() {
                   key={platform}
                   onClick={() => connect(platform as "tiktok" | "instagram" | "youtube")}
                   disabled={connecting !== null}
-                  className="rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium capitalize hover:bg-indigo-500 transition disabled:opacity-50"
+                  className="rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium capitalize hover:bg-blue-500 transition disabled:opacity-50"
                 >
                   {connecting === platform ? "Redirecting..." : `Connect ${platform}`}
                 </button>
@@ -251,7 +251,7 @@ function WelcomeForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-indigo-600 text-white font-medium py-2.5 hover:bg-indigo-500 transition disabled:opacity-50"
+          className="w-full rounded-lg bg-blue-600 text-white font-medium py-2.5 hover:bg-blue-500 transition disabled:opacity-50"
         >
           {loading ? "Sending..." : "Submit"}
         </button>

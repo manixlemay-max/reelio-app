@@ -23,7 +23,7 @@ export default async function DashboardOverviewPage() {
           <p className="text-neutral-500 mb-4">No products yet.</p>
           <Link
             href="/dashboard/products/new"
-            className="rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition"
+            className="rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-500 transition"
           >
             Add your first product
           </Link>

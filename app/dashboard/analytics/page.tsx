@@ -28,7 +28,7 @@ function Bar({ value, max, colorClass }: { value: number; max: number; colorClas
   return (
     <div className="h-1.5 w-full rounded-full bg-neutral-900 overflow-hidden">
       <div
-        className={`h-full rounded-full ${colorClass ?? "bg-indigo-500"}`}
+        className={`h-full rounded-full ${colorClass ?? "bg-blue-500"}`}
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -149,7 +149,7 @@ function StatCard({
 }) {
   return (
     <div className="rounded-2xl border border-neutral-800 p-4">
-      <Icon size={16} className="text-indigo-400 mb-2" />
+      <Icon size={16} className="text-blue-400 mb-2" />
       <p className="text-2xl font-semibold">{value.toLocaleString("en-US")}</p>
       <p className="text-xs text-neutral-500 mt-0.5">{label}</p>
     </div>

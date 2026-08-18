@@ -45,7 +45,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
                 </p>
               </div>
               {v.videoUrl && (
-                <a href={v.videoUrl} target="_blank" className="text-xs text-indigo-400 hover:underline">
+                <a href={v.videoUrl} target="_blank" className="text-xs text-blue-400 hover:underline">
                   Watch
                 </a>
               )}

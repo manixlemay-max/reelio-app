@@ -89,7 +89,7 @@ export default function NewProductPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-full bg-indigo-600 text-white px-5 py-2 text-sm font-medium hover:bg-indigo-500 transition disabled:opacity-50"
+          className="rounded-full bg-blue-600 text-white px-5 py-2 text-sm font-medium hover:bg-blue-500 transition disabled:opacity-50"
         >
           {submitting ? "Adding..." : "Add product"}
         </button>

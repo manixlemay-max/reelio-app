@@ -12,7 +12,7 @@ export default function SiteHeader() {
           </Link>
           <Link
             href="/login"
-            className="rounded-full bg-indigo-600 text-white px-4 py-2 font-medium hover:bg-indigo-500 transition"
+            className="rounded-full bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-500 transition"
           >
             Dashboard login
           </Link>

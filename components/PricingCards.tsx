@@ -44,7 +44,7 @@ export default function PricingCards({ highlightTierId = "starter" }: { highligh
                   : "border-neutral-800"
               }`}
             >
-              <span className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 flex items-center gap-1">
+              <span className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 flex items-center gap-1">
                 ✨ 7-day free trial
               </span>
               {highlighted && (
@@ -67,8 +67,8 @@ export default function PricingCards({ highlightTierId = "starter" }: { highligh
                 disabled={loadingTier === tier.id}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${
                   highlighted
-                    ? "bg-indigo-600 text-white hover:bg-indigo-500"
-                    : "border border-neutral-700 hover:border-indigo-400"
+                    ? "bg-blue-600 text-white hover:bg-blue-500"
+                    : "border border-neutral-700 hover:border-blue-400"
                 }`}
               >
                 {loadingTier === tier.id ? "Redirecting..." : `Start free trial`}

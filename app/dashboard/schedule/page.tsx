@@ -132,7 +132,7 @@ export default function SchedulePage() {
         <button
           onClick={() => setShowForm((s) => !s)}
           disabled={videos.length === 0}
-          className="flex items-center gap-1.5 rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-500 transition disabled:opacity-50"
         >
           {showForm ? <X size={16} /> : <Plus size={16} />}
           {showForm ? "Close" : "New post"}
@@ -187,7 +187,7 @@ export default function SchedulePage() {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-indigo-600 text-white px-5 py-2 text-sm font-medium hover:bg-indigo-500 transition disabled:opacity-50"
+            className="rounded-full bg-blue-600 text-white px-5 py-2 text-sm font-medium hover:bg-blue-500 transition disabled:opacity-50"
           >
             {submitting ? "Scheduling..." : "Schedule post"}
           </button>
@@ -235,7 +235,7 @@ export default function SchedulePage() {
               key={d.toISOString()}
               className={`min-h-[5.5rem] rounded-lg border p-1.5 ${
                 inMonth ? "border-neutral-800" : "border-neutral-900"
-              } ${isToday ? "bg-indigo-500/10 border-indigo-500/40" : ""}`}
+              } ${isToday ? "bg-blue-500/10 border-blue-500/40" : ""}`}
             >
               <p className={`text-xs mb-1 ${inMonth ? "text-neutral-400" : "text-neutral-700"}`}>{d.getDate()}</p>
               <div className="space-y-1">
@@ -274,7 +274,7 @@ export default function SchedulePage() {
                   <button
                     onClick={() => saveEdit(p.id)}
                     disabled={busyId === p.id}
-                    className="text-xs rounded-full bg-indigo-600 text-white px-3 py-1 hover:bg-indigo-500 transition disabled:opacity-50"
+                    className="text-xs rounded-full bg-blue-600 text-white px-3 py-1 hover:bg-blue-500 transition disabled:opacity-50"
                   >
                     Save
                   </button>

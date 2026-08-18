@@ -53,7 +53,7 @@ export default function ProductsPage() {
         <h1 className="text-2xl font-semibold">Products</h1>
         <Link
           href="/dashboard/products/new"
-          className="flex items-center gap-1.5 rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition"
+          className="flex items-center gap-1.5 rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-500 transition"
         >
           <Plus size={16} />
           Add product
@@ -65,7 +65,7 @@ export default function ProductsPage() {
           <p className="text-neutral-500 mb-4">No products yet.</p>
           <Link
             href="/dashboard/products/new"
-            className="rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition"
+            className="rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-500 transition"
           >
             Add your first product
           </Link>
