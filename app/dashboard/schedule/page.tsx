@@ -57,13 +57,13 @@ export default function SchedulePage() {
       <h1 className="text-2xl font-semibold mb-8">Schedule</h1>
 
       {videos.length === 0 ? (
-        <p className="text-neutral-400 mb-8">Generate a video first before scheduling it.</p>
+        <p className="text-neutral-500 mb-8">Generate a video first before scheduling it.</p>
       ) : (
         <form onSubmit={onSubmit} className="space-y-4 max-w-lg mb-12">
           <select
             value={videoId}
             onChange={(e) => setVideoId(e.target.value)}
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 px-3 py-2 text-sm"
           >
             {videos.map((v) => (
               <option key={v.id} value={v.id}>
@@ -75,7 +75,7 @@ export default function SchedulePage() {
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value as "tiktok" | "instagram" | "youtube")}
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 px-3 py-2 text-sm"
           >
             <option value="tiktok">TikTok</option>
             <option value="instagram">Instagram</option>
@@ -86,7 +86,7 @@ export default function SchedulePage() {
             value={hashtags}
             onChange={(e) => setHashtags(e.target.value)}
             placeholder="#ecommerce #ugc #myproduct"
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 placeholder-neutral-400 px-3 py-2 text-sm"
           />
 
           <input
@@ -94,17 +94,17 @@ export default function SchedulePage() {
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
             required
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 px-3 py-2 text-sm"
           />
 
           {error && (
-            <p className="text-sm text-red-400 whitespace-pre-wrap">{error}</p>
+            <p className="text-sm text-red-600 whitespace-pre-wrap">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-emerald-500 text-neutral-950 px-5 py-2 text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-50"
+            className="rounded-full bg-indigo-600 text-white px-5 py-2 text-sm font-medium hover:bg-indigo-500 transition disabled:opacity-50"
           >
             {submitting ? "Scheduling..." : "Schedule post"}
           </button>
@@ -114,11 +114,11 @@ export default function SchedulePage() {
       <h2 className="text-sm font-medium text-neutral-500 mb-3">Scheduled posts</h2>
       <ul className="space-y-2">
         {posts.map((p) => (
-          <li key={p.id} className="rounded-xl border border-neutral-800 p-4">
+          <li key={p.id} className="rounded-xl border border-neutral-200 p-4">
             <p className="font-medium">
               {p.productName} · {p.platform}
             </p>
-            <p className="text-sm text-neutral-400">
+            <p className="text-sm text-neutral-500">
               {new Date(p.scheduledAt).toLocaleString("en-US")} · {p.status}
             </p>
           </li>

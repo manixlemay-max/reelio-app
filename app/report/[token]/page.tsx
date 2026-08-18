@@ -31,7 +31,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
       ) : (
         <ul className="space-y-3 mb-12">
           {videos.map((v) => (
-            <li key={v.id} className="rounded-lg border border-neutral-800 p-3 flex items-center justify-between">
+            <li key={v.id} className="rounded-lg border border-neutral-200 p-3 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">{v.productName}</p>
                 <p className="text-xs text-neutral-500">
@@ -39,7 +39,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
                 </p>
               </div>
               {v.videoUrl && (
-                <a href={v.videoUrl} target="_blank" className="text-xs text-emerald-400 hover:underline">
+                <a href={v.videoUrl} target="_blank" className="text-xs text-indigo-600 hover:underline">
                   Watch
                 </a>
               )}
@@ -54,7 +54,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
       ) : (
         <ul className="space-y-3">
           {posts.map((p) => (
-            <li key={p.id} className="rounded-lg border border-neutral-800 p-3">
+            <li key={p.id} className="rounded-lg border border-neutral-200 p-3">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-sm font-medium capitalize">{p.platform}</p>
                 <span className="text-xs text-neutral-500">{new Date(p.scheduledAt).toLocaleString()}</span>
@@ -70,7 +70,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-neutral-800 p-4 text-center">
+    <div className="rounded-xl border border-neutral-200 p-4 text-center">
       <p className="text-2xl font-semibold">{value.toLocaleString()}</p>
       <p className="text-xs text-neutral-500 mt-1">{label}</p>
     </div>

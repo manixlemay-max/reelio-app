@@ -111,7 +111,7 @@ export default function VideosPage() {
             <select
               value={selectedProduct}
               onChange={(e) => setSelectedProduct(e.target.value)}
-              className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
+              className="rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 px-3 py-2 text-sm"
             >
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -122,25 +122,25 @@ export default function VideosPage() {
             <button
               onClick={generate}
               disabled={generating}
-              className="rounded-full bg-emerald-500 text-neutral-950 px-4 py-2 text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-50"
+              className="rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition disabled:opacity-50"
             >
               {generating ? "Starting..." : "Generate a video"}
             </button>
           </div>
 
           {avatarsDemoMode ? (
-            <p className="text-xs text-neutral-600">
+            <p className="text-xs text-neutral-500">
               Connect a HeyGen API key to pick a specific avatar for this video. Without it, a demo
               video is used.
             </p>
           ) : avatars.length > 0 ? (
             <div>
-              <p className="text-sm text-neutral-400 mb-2">Choose an avatar (optional):</p>
+              <p className="text-sm text-neutral-500 mb-2">Choose an avatar (optional):</p>
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => setSelectedAvatarId("")}
-                  className={`rounded-lg border px-3 py-2 text-xs text-neutral-300 transition ${
-                    selectedAvatarId === "" ? "border-emerald-400 bg-emerald-500/10" : "border-neutral-800 hover:border-neutral-700"
+                  className={`rounded-lg border px-3 py-2 text-xs text-neutral-600 transition ${
+                    selectedAvatarId === "" ? "border-indigo-500 bg-indigo-600/10" : "border-neutral-200 hover:border-neutral-300"
                   }`}
                 >
                   Auto (let AI pick)
@@ -150,16 +150,16 @@ export default function VideosPage() {
                     key={a.id}
                     onClick={() => setSelectedAvatarId(a.id)}
                     className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition ${
-                      selectedAvatarId === a.id ? "border-emerald-400 bg-emerald-500/10" : "border-neutral-800 hover:border-neutral-700"
+                      selectedAvatarId === a.id ? "border-indigo-500 bg-indigo-600/10" : "border-neutral-200 hover:border-neutral-300"
                     }`}
                   >
                     {a.previewImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={a.previewImageUrl} alt={a.name} className="w-16 h-16 object-cover rounded-md" />
                     ) : (
-                      <div className="w-16 h-16 rounded-md bg-neutral-800" />
+                      <div className="w-16 h-16 rounded-md bg-neutral-200" />
                     )}
-                    <span className="text-xs text-neutral-400 max-w-[4.5rem] truncate">{a.name}</span>
+                    <span className="text-xs text-neutral-500 max-w-[4.5rem] truncate">{a.name}</span>
                   </button>
                 ))}
               </div>
@@ -170,10 +170,10 @@ export default function VideosPage() {
 
       <ul className="space-y-3">
         {videos.map((v) => (
-          <li key={v.id} className="rounded-xl border border-neutral-800 p-4 flex items-center justify-between">
+          <li key={v.id} className="rounded-xl border border-neutral-200 p-4 flex items-center justify-between">
             <div>
               <p className="font-medium">{v.productName}</p>
-              <p className="text-sm text-neutral-400">
+              <p className="text-sm text-neutral-500">
                 {v.status === "pending" ? "generating... (usually 1-3 min)" : v.status} · provider: {v.provider}
               </p>
             </div>
@@ -181,7 +181,7 @@ export default function VideosPage() {
               <a
                 href={v.videoUrl}
                 target="_blank"
-                className="text-sm text-emerald-400 hover:underline"
+                className="text-sm text-indigo-600 hover:underline"
               >
                 View video
               </a>

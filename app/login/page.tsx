@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,22 +32,25 @@ export default function LoginPage() {
   return (
     <main className="flex-1 flex items-center justify-center px-6">
       <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4">
-        <h1 className="text-2xl font-semibold text-center mb-2">Reelio dashboard</h1>
-        <p className="text-sm text-neutral-400 text-center mb-6">Enter the dashboard password to continue.</p>
+        <div className="flex justify-center mb-6">
+          <Logo />
+        </div>
+        <h1 className="text-2xl font-semibold text-center mb-2">Dashboard login</h1>
+        <p className="text-sm text-neutral-500 text-center mb-6">Enter the dashboard password to continue.</p>
         <input
           type="password"
           required
           autoFocus
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2"
+          className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 placeholder-neutral-400 px-3 py-2"
           placeholder="Password"
         />
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-full bg-emerald-500 text-neutral-950 px-5 py-2 text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-50"
+          className="w-full rounded-full bg-indigo-600 text-white px-5 py-2 text-sm font-medium hover:bg-indigo-500 transition disabled:opacity-50"
         >
           {submitting ? "Checking..." : "Enter"}
         </button>

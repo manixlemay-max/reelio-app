@@ -41,22 +41,22 @@ export default function AnalyticsPage() {
       </p>
 
       <div className="grid sm:grid-cols-2 gap-4 mb-10">
-        <div className="rounded-2xl border border-neutral-800 p-6">
+        <div className="rounded-2xl border border-neutral-200 p-6">
           <p className="text-3xl font-semibold">{totalViews.toLocaleString("en-US")}</p>
-          <p className="text-sm text-neutral-400 mt-1">Total views</p>
+          <p className="text-sm text-neutral-500 mt-1">Total views</p>
         </div>
-        <div className="rounded-2xl border border-neutral-800 p-6">
+        <div className="rounded-2xl border border-neutral-200 p-6">
           <p className="text-3xl font-semibold">{totalLikes.toLocaleString("en-US")}</p>
-          <p className="text-sm text-neutral-400 mt-1">Total likes</p>
+          <p className="text-sm text-neutral-500 mt-1">Total likes</p>
         </div>
       </div>
 
       <h2 className="text-sm font-medium text-neutral-500 mb-3">Best time to post</h2>
       <ul className="space-y-2 mb-10">
         {bestTimes.slice(0, 5).map((t, i) => (
-          <li key={i} className="rounded-xl border border-neutral-800 p-4 flex justify-between">
+          <li key={i} className="rounded-xl border border-neutral-200 p-4 flex justify-between">
             <span className="capitalize">{t.platform} · {t.hour}:00</span>
-            <span className="text-neutral-400">{t.avgViews.toLocaleString("en-US")} avg views</span>
+            <span className="text-neutral-500">{t.avgViews.toLocaleString("en-US")} avg views</span>
           </li>
         ))}
         {bestTimes.length === 0 && (
@@ -67,9 +67,9 @@ export default function AnalyticsPage() {
       <h2 className="text-sm font-medium text-neutral-500 mb-3">Per-post breakdown</h2>
       <ul className="space-y-2">
         {rows.map((r) => (
-          <li key={r.id} className="rounded-xl border border-neutral-800 p-4">
+          <li key={r.id} className="rounded-xl border border-neutral-200 p-4">
             <p className="font-medium">{r.productName} · {r.platform}</p>
-            <p className="text-sm text-neutral-400">
+            <p className="text-sm text-neutral-500">
               {r.views} views · {r.likes} likes · {r.comments} comments · {r.shares} shares
             </p>
           </li>
