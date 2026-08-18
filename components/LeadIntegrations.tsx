@@ -63,7 +63,7 @@ export default function LeadIntegrations({ lead }: { lead: Lead }) {
   }
 
   return (
-    <div className="mt-3 border-t border-neutral-200 pt-3">
+    <div className="mt-3 border-t border-neutral-800 pt-3">
       <p className="text-xs text-neutral-500 mb-2">Connected accounts for this client:</p>
       <div className="grid sm:grid-cols-3 gap-2">
         {PLATFORMS.map(({ key, label }) => {
@@ -75,7 +75,7 @@ export default function LeadIntegrations({ lead }: { lead: Lead }) {
               <select
                 value={values[fieldKey]}
                 onChange={(e) => setValues((v) => ({ ...v, [fieldKey]: e.target.value }))}
-                className="w-full rounded-md bg-neutral-50 border border-neutral-200 text-neutral-900 text-xs px-2 py-1.5"
+                className="w-full rounded-md bg-neutral-900 border border-neutral-800 text-neutral-100 text-xs px-2 py-1.5"
               >
                 <option value="">Not connected</option>
                 {options.map((opt) => (
@@ -91,7 +91,7 @@ export default function LeadIntegrations({ lead }: { lead: Lead }) {
       <button
         onClick={save}
         disabled={saving}
-        className="mt-2 text-xs rounded-full bg-neutral-200 hover:bg-neutral-300 px-3 py-1.5 transition disabled:opacity-50"
+        className="mt-2 text-xs rounded-full bg-neutral-800 hover:bg-neutral-700 px-3 py-1.5 transition disabled:opacity-50"
       >
         {saving ? "Saving..." : saved ? "Saved ✓" : "Save"}
       </button>

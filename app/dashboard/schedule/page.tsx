@@ -1,9 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 
 type Video = { id: string; productName: string; status: string; videoUrl: string | null };
 type Post = { id: string; platform: string; hashtags: string; scheduledAt: string; status: string; productName: string };
+
+const PLATFORM_COLOR: Record<string, string> = {
+  tiktok: "bg-fuchsia-500",
+  instagram: "bg-pink-500",
+  youtube: "bg-red-500",
+};
+
+function startOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+function sameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
 
 export default function SchedulePage() {
   const [videos, setVideos] = useState<Video[]>([]);
@@ -14,6 +28,8 @@ export default function SchedulePage() {
   const [scheduledAt, setScheduledAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [month, setMonth] = useState(() => startOfMonth(new Date()));
 
   async function refresh() {
     const [videosRes, postsRes] = await Promise.all([
@@ -48,22 +64,59 @@ export default function SchedulePage() {
     } else {
       setHashtags("");
       setScheduledAt("");
+      setShowForm(false);
     }
     refresh();
   }
 
+  const days = useMemo(() => {
+    const first = startOfMonth(month);
+    const gridStart = new Date(first);
+    gridStart.setDate(first.getDate() - first.getDay()); // back to Sunday
+    return Array.from({ length: 42 }, (_, i) => {
+      const d = new Date(gridStart);
+      d.setDate(gridStart.getDate() + i);
+      return d;
+    });
+  }, [month]);
+
+  const postsByDay = useMemo(() => {
+    const map = new Map<string, Post[]>();
+    for (const p of posts) {
+      const key = new Date(p.scheduledAt).toDateString();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    return map;
+  }, [posts]);
+
+  const monthLabel = month.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const today = new Date();
+
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-8">Schedule</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Schedule</h1>
+        <button
+          onClick={() => setShowForm((s) => !s)}
+          disabled={videos.length === 0}
+          className="flex items-center gap-1.5 rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium hover:bg-indigo-500 transition disabled:opacity-50"
+        >
+          {showForm ? <X size={16} /> : <Plus size={16} />}
+          {showForm ? "Close" : "New post"}
+        </button>
+      </div>
 
-      {videos.length === 0 ? (
-        <p className="text-neutral-500 mb-8">Generate a video first before scheduling it.</p>
-      ) : (
-        <form onSubmit={onSubmit} className="space-y-4 max-w-lg mb-12">
+      {videos.length === 0 && (
+        <p className="text-neutral-500 mb-6 text-sm">Generate a video first before scheduling it.</p>
+      )}
+
+      {showForm && videos.length > 0 && (
+        <form onSubmit={onSubmit} className="space-y-3 max-w-lg mb-10 rounded-xl border border-neutral-800 p-4">
           <select
             value={videoId}
             onChange={(e) => setVideoId(e.target.value)}
-            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
           >
             {videos.map((v) => (
               <option key={v.id} value={v.id}>
@@ -75,7 +128,7 @@ export default function SchedulePage() {
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value as "tiktok" | "instagram" | "youtube")}
-            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
           >
             <option value="tiktok">TikTok</option>
             <option value="instagram">Instagram</option>
@@ -86,7 +139,7 @@ export default function SchedulePage() {
             value={hashtags}
             onChange={(e) => setHashtags(e.target.value)}
             placeholder="#ecommerce #ugc #myproduct"
-            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 placeholder-neutral-400 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
           />
 
           <input
@@ -94,12 +147,10 @@ export default function SchedulePage() {
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
             required
-            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 px-3 py-2 text-sm"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
           />
 
-          {error && (
-            <p className="text-sm text-red-600 whitespace-pre-wrap">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-400 whitespace-pre-wrap">{error}</p>}
 
           <button
             type="submit"
@@ -111,16 +162,79 @@ export default function SchedulePage() {
         </form>
       )}
 
-      <h2 className="text-sm font-medium text-neutral-500 mb-3">Scheduled posts</h2>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-medium text-neutral-300">{monthLabel}</p>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+            className="rounded-md p-1.5 hover:bg-neutral-900 transition"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={() => setMonth(startOfMonth(new Date()))}
+            className="text-xs text-neutral-400 hover:text-neutral-200 px-2"
+          >
+            Today
+          </button>
+          <button
+            onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+            className="rounded-md p-1.5 hover:bg-neutral-900 transition"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 text-center text-xs text-neutral-500 mb-1">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div key={d} className="py-1">
+            {d}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1 mb-10">
+        {days.map((d) => {
+          const dayPosts = postsByDay.get(d.toDateString()) ?? [];
+          const inMonth = d.getMonth() === month.getMonth();
+          const isToday = sameDay(d, today);
+          return (
+            <div
+              key={d.toISOString()}
+              className={`min-h-[5.5rem] rounded-lg border p-1.5 ${
+                inMonth ? "border-neutral-800" : "border-neutral-900"
+              } ${isToday ? "bg-indigo-500/10 border-indigo-500/40" : ""}`}
+            >
+              <p className={`text-xs mb-1 ${inMonth ? "text-neutral-400" : "text-neutral-700"}`}>{d.getDate()}</p>
+              <div className="space-y-1">
+                {dayPosts.slice(0, 3).map((p) => (
+                  <div key={p.id} className="flex items-center gap-1 text-[10px] text-neutral-300 truncate">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PLATFORM_COLOR[p.platform] ?? "bg-neutral-500"}`} />
+                    <span className="truncate">{p.productName}</span>
+                  </div>
+                ))}
+                {dayPosts.length > 3 && (
+                  <p className="text-[10px] text-neutral-600">+{dayPosts.length - 3} more</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <h2 className="text-sm font-medium text-neutral-500 mb-3">All scheduled posts</h2>
       <ul className="space-y-2">
         {posts.map((p) => (
-          <li key={p.id} className="rounded-xl border border-neutral-200 p-4">
-            <p className="font-medium">
-              {p.productName} · {p.platform}
-            </p>
-            <p className="text-sm text-neutral-500">
-              {new Date(p.scheduledAt).toLocaleString("en-US")} · {p.status}
-            </p>
+          <li key={p.id} className="rounded-xl border border-neutral-800 p-4 flex items-center gap-3">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${PLATFORM_COLOR[p.platform] ?? "bg-neutral-500"}`} />
+            <div>
+              <p className="font-medium">
+                {p.productName} · {p.platform}
+              </p>
+              <p className="text-sm text-neutral-500">
+                {new Date(p.scheduledAt).toLocaleString("en-US")} · {p.status}
+              </p>
+            </div>
           </li>
         ))}
       </ul>

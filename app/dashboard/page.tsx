@@ -19,7 +19,7 @@ export default async function DashboardOverviewPage() {
       </div>
 
       {products.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-neutral-200 p-8 text-center">
+        <div className="rounded-2xl border border-dashed border-neutral-800 p-8 text-center">
           <p className="text-neutral-500 mb-4">No products yet.</p>
           <Link
             href="/dashboard/products/new"
@@ -33,7 +33,7 @@ export default async function DashboardOverviewPage() {
           <h2 className="text-sm font-medium text-neutral-500 mb-3">Recent products</h2>
           <ul className="space-y-2">
             {products.slice(0, 5).map((p) => (
-              <li key={p.id} className="rounded-xl border border-neutral-200 p-4">
+              <li key={p.id} className="rounded-xl border border-neutral-800 p-4">
                 <p className="font-medium">{p.name}</p>
                 <p className="text-sm text-neutral-500">{p.description}</p>
               </li>
@@ -47,7 +47,7 @@ export default async function DashboardOverviewPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-neutral-200 p-6">
+    <div className="rounded-2xl border border-neutral-800 p-6">
       <p className="text-3xl font-semibold">{value}</p>
       <p className="text-sm text-neutral-500 mt-1">{label}</p>
     </div>

@@ -60,7 +60,7 @@ function WelcomeForm() {
   return (
     <div className="max-w-lg mx-auto py-16 px-6">
       {checkoutSuccess && (
-        <div className="mb-8 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+        <div className="mb-8 rounded-lg border border-green-800 bg-green-950/40 px-4 py-3 text-sm text-green-300">
           Payment received — welcome to Reelio! Tell us a bit about your business so we
           can get started.
         </div>
@@ -72,35 +72,35 @@ function WelcomeForm() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm mb-1 text-neutral-600">Your name</label>
+          <label className="block text-sm mb-1 text-neutral-400">Your name</label>
           <input
             required
             value={form.name}
             onChange={(e) => update("name", e.target.value)}
-            className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-neutral-900 placeholder-neutral-400"
+            className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500"
           />
         </div>
         <div>
-          <label className="block text-sm mb-1 text-neutral-600">Email</label>
+          <label className="block text-sm mb-1 text-neutral-400">Email</label>
           <input
             required
             type="email"
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
-            className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-neutral-900 placeholder-neutral-400"
+            className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500"
           />
         </div>
         <div>
-          <label className="block text-sm mb-1 text-neutral-600">Business / brand name</label>
+          <label className="block text-sm mb-1 text-neutral-400">Business / brand name</label>
           <input
             required
             value={form.businessName}
             onChange={(e) => update("businessName", e.target.value)}
-            className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-neutral-900 placeholder-neutral-400"
+            className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500"
           />
         </div>
         <div>
-          <label className="block text-sm mb-1 text-neutral-600">
+          <label className="block text-sm mb-1 text-neutral-400">
             What product(s) do you want videos for?
           </label>
           <textarea
@@ -109,31 +109,31 @@ function WelcomeForm() {
             value={form.productDescription}
             onChange={(e) => update("productDescription", e.target.value)}
             placeholder="Describe your product(s), target audience, and links to product pages if you have them."
-            className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-neutral-900 placeholder-neutral-400"
+            className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500"
           />
         </div>
         <div>
-          <label className="block text-sm mb-1 text-neutral-600">
+          <label className="block text-sm mb-1 text-neutral-400">
             Social media handles (TikTok, Instagram, YouTube)
           </label>
           <input
             value={form.socialHandles}
             onChange={(e) => update("socialHandles", e.target.value)}
             placeholder="@yourbrand"
-            className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-neutral-900 placeholder-neutral-400"
+            className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500"
           />
         </div>
         <div>
-          <label className="block text-sm mb-1 text-neutral-600">Anything else we should know?</label>
+          <label className="block text-sm mb-1 text-neutral-400">Anything else we should know?</label>
           <textarea
             rows={3}
             value={form.notes}
             onChange={(e) => update("notes", e.target.value)}
-            className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-neutral-900 placeholder-neutral-400"
+            className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500"
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
         <button
           type="submit"

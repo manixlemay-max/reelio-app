@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Loader2, CheckCircle2, XCircle, Play } from "lucide-react";
 
 type Product = { id: string; name: string };
 type Video = {
@@ -111,7 +112,7 @@ export default function VideosPage() {
             <select
               value={selectedProduct}
               onChange={(e) => setSelectedProduct(e.target.value)}
-              className="rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 px-3 py-2 text-sm"
+              className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
             >
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -139,8 +140,8 @@ export default function VideosPage() {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => setSelectedAvatarId("")}
-                  className={`rounded-lg border px-3 py-2 text-xs text-neutral-600 transition ${
-                    selectedAvatarId === "" ? "border-indigo-500 bg-indigo-600/10" : "border-neutral-200 hover:border-neutral-300"
+                  className={`rounded-lg border px-3 py-2 text-xs text-neutral-400 transition ${
+                    selectedAvatarId === "" ? "border-indigo-400 bg-indigo-600/10" : "border-neutral-800 hover:border-neutral-700"
                   }`}
                 >
                   Auto (let AI pick)
@@ -150,14 +151,14 @@ export default function VideosPage() {
                     key={a.id}
                     onClick={() => setSelectedAvatarId(a.id)}
                     className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition ${
-                      selectedAvatarId === a.id ? "border-indigo-500 bg-indigo-600/10" : "border-neutral-200 hover:border-neutral-300"
+                      selectedAvatarId === a.id ? "border-indigo-400 bg-indigo-600/10" : "border-neutral-800 hover:border-neutral-700"
                     }`}
                   >
                     {a.previewImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={a.previewImageUrl} alt={a.name} className="w-16 h-16 object-cover rounded-md" />
                     ) : (
-                      <div className="w-16 h-16 rounded-md bg-neutral-200" />
+                      <div className="w-16 h-16 rounded-md bg-neutral-800" />
                     )}
                     <span className="text-xs text-neutral-500 max-w-[4.5rem] truncate">{a.name}</span>
                   </button>
@@ -168,27 +169,45 @@ export default function VideosPage() {
         </div>
       )}
 
-      <ul className="space-y-3">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {videos.map((v) => (
-          <li key={v.id} className="rounded-xl border border-neutral-200 p-4 flex items-center justify-between">
-            <div>
-              <p className="font-medium">{v.productName}</p>
-              <p className="text-sm text-neutral-500">
-                {v.status === "pending" ? "generating... (usually 1-3 min)" : v.status} · provider: {v.provider}
-              </p>
+          <div key={v.id} className="rounded-xl border border-neutral-800 overflow-hidden flex flex-col">
+            <div className="aspect-[9/16] bg-neutral-900 flex items-center justify-center">
+              {v.status === "ready" && v.videoUrl ? (
+                <video src={v.videoUrl} controls className="w-full h-full object-cover" />
+              ) : v.status === "pending" ? (
+                <Loader2 size={24} className="animate-spin text-neutral-600" />
+              ) : (
+                <Play size={24} className="text-neutral-700" />
+              )}
             </div>
-            {v.videoUrl && (
-              <a
-                href={v.videoUrl}
-                target="_blank"
-                className="text-sm text-indigo-600 hover:underline"
-              >
-                View video
-              </a>
-            )}
-          </li>
+            <div className="p-3">
+              <p className="font-medium text-sm mb-1">{v.productName}</p>
+              <div className="flex items-center gap-1.5 text-xs text-neutral-500">
+                {v.status === "pending" && (
+                  <>
+                    <Loader2 size={12} className="animate-spin" />
+                    <span>Generating (usually 1-3 min)</span>
+                  </>
+                )}
+                {v.status === "ready" && (
+                  <>
+                    <CheckCircle2 size={12} className="text-green-400" />
+                    <span>Ready</span>
+                  </>
+                )}
+                {v.status === "failed" && (
+                  <>
+                    <XCircle size={12} className="text-red-400" />
+                    <span>Failed</span>
+                  </>
+                )}
+                <span className="text-neutral-700">· {v.provider}</span>
+              </div>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

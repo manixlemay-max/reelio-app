@@ -6,9 +6,9 @@ export const dynamic = "force-dynamic";
 
 function statusBadge(status: string | undefined) {
   if (!status) return { text: "No subscription found", color: "text-neutral-500" };
-  if (status === "active" || status === "trialing") return { text: `Active (${status})`, color: "text-green-600" };
-  if (status === "canceled") return { text: "Canceled", color: "text-red-600" };
-  return { text: status, color: "text-amber-600" };
+  if (status === "active" || status === "trialing") return { text: `Active (${status})`, color: "text-green-400" };
+  if (status === "canceled") return { text: "Canceled", color: "text-red-400" };
+  return { text: status, color: "text-amber-400" };
 }
 
 export default async function ClientsPage() {
@@ -37,7 +37,7 @@ export default async function ClientsPage() {
             const sub = subsByEmail.get(lead.email.toLowerCase());
             const badge = statusBadge(sub?.status);
             return (
-              <div key={lead.id} className="rounded-lg border border-neutral-200 p-4">
+              <div key={lead.id} className="rounded-lg border border-neutral-800 p-4">
                 <div className="flex items-baseline justify-between mb-2">
                   <h2 className="font-medium">{lead.businessName}</h2>
                   <span className="text-xs text-neutral-500">
@@ -48,7 +48,7 @@ export default async function ClientsPage() {
                   {lead.name} &middot; {lead.email}
                 </p>
                 <p className={`text-xs font-medium mb-2 ${badge.color}`}>{badge.text}</p>
-                <p className="text-sm text-neutral-600 mb-2 whitespace-pre-wrap">
+                <p className="text-sm text-neutral-400 mb-2 whitespace-pre-wrap">
                   {lead.productDescription}
                 </p>
                 {lead.socialHandles && (
@@ -63,7 +63,7 @@ export default async function ClientsPage() {
                   <a
                     href={`${baseUrl}/report/${tokenByLeadId.get(lead.id)}`}
                     target="_blank"
-                    className="text-indigo-600 hover:underline"
+                    className="text-indigo-400 hover:underline"
                   >
                     {baseUrl}/report/{tokenByLeadId.get(lead.id)}
                   </a>

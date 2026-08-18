@@ -48,7 +48,7 @@ export default function NewProductPage() {
           <select
             value={leadId}
             onChange={(e) => setLeadId(e.target.value)}
-            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 px-3 py-2"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2"
           >
             <option value="">No client (internal test)</option>
             {leads.map((lead) => (
@@ -63,7 +63,7 @@ export default function NewProductPage() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 placeholder-neutral-400 px-3 py-2"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2"
             placeholder="Ex: Insulated water bottle 25oz"
           />
         </Field>
@@ -72,7 +72,7 @@ export default function NewProductPage() {
             required
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 placeholder-neutral-400 px-3 py-2"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2"
             rows={4}
             placeholder="What makes this product interesting for a UGC video"
           />
@@ -81,11 +81,11 @@ export default function NewProductPage() {
           <input
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
-            className="w-full rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 placeholder-neutral-400 px-3 py-2"
+            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2"
             placeholder="https://..."
           />
         </Field>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-400">{error}</p>}
         <button
           type="submit"
           disabled={submitting}

@@ -40,12 +40,12 @@ export default function PricingPage() {
       </p>
 
       {error && (
-        <p className="text-center text-sm text-red-600 mb-6">{error}</p>
+        <p className="text-center text-sm text-red-400 mb-6">{error}</p>
       )}
 
       <div className="grid sm:grid-cols-3 gap-6">
         {TIERS.map((tier) => (
-          <div key={tier.id} className="rounded-2xl border border-neutral-200 p-6 flex flex-col">
+          <div key={tier.id} className="rounded-2xl border border-neutral-800 p-6 flex flex-col">
             <h3 className="font-medium mb-1">{tier.name}</h3>
             <p className="text-3xl font-semibold mb-4">
               ${tier.priceUsd}<span className="text-sm text-neutral-500 font-normal">/mo</span>
