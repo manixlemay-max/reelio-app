@@ -183,6 +183,15 @@ export async function updateProductLead(id: string, leadId: string | null): Prom
   await sql`UPDATE products SET lead_id = ${leadId} WHERE id = ${id}`;
 }
 
+// All products belonging to one client, oldest first — used by the
+// automation cron to know which product to generate the next video for.
+export async function getProductsByLead(leadId: string): Promise<Product[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM products WHERE lead_id = ${leadId} ORDER BY created_at ASC`;
+  return rows.map(toProduct);
+}
+
 export async function listProducts(): Promise<Product[]> {
   const sql = getSql();
   await ensureSchema();
@@ -275,6 +284,21 @@ export async function getVideo(id: string): Promise<Video | undefined> {
   return rows[0] ? toVideo(rows[0]) : undefined;
 }
 
+// Most recent video generated for any product belonging to this client —
+// used by the automation cron to pace out recurring monthly videos.
+export async function getLatestVideoForLead(leadId: string): Promise<Video | undefined> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`
+    SELECT videos.* FROM videos
+    JOIN products ON products.id = videos.product_id
+    WHERE products.lead_id = ${leadId}
+    ORDER BY videos.created_at DESC
+    LIMIT 1
+  `;
+  return rows[0] ? toVideo(rows[0]) : undefined;
+}
+
 // --- Posts ---
 export async function createPost(input: {
   videoId: string;
@@ -307,6 +331,16 @@ export async function deletePost(id: string): Promise<void> {
   await ensureSchema();
   await sql`DELETE FROM analytics WHERE post_id = ${id}`;
   await sql`DELETE FROM posts WHERE id = ${id}`;
+}
+
+// Whether a video has already been posted (or attempted) to a given
+// platform — lets the auto-posting cron skip work it already did, while
+// still retrying platforms a client connects later.
+export async function hasPostForVideoPlatform(videoId: string, platform: Platform): Promise<boolean> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT id FROM posts WHERE video_id = ${videoId} AND platform = ${platform} LIMIT 1`;
+  return rows.length > 0;
 }
 
 export async function updatePostSchedule(id: string, scheduledAt: string): Promise<void> {

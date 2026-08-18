@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/generate-recurring-videos", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/process-videos", "schedule": "0 9 * * *" }
+  ]
+}
