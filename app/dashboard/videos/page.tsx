@@ -107,7 +107,8 @@ export default function VideosPage() {
 
   const filteredAvatars = avatars.filter((a) => {
     if (genderFilter !== "all" && a.gender !== genderFilter) return false;
-    if (avatarSearch && !a.name.toLowerCase().includes(avatarSearch.toLowerCase())) return false;
+    const name = a.name ?? "";
+    if (avatarSearch && !name.toLowerCase().includes(avatarSearch.toLowerCase())) return false;
     return true;
   });
 
