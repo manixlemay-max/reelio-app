@@ -20,6 +20,9 @@ function WelcomeForm() {
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
+  const [networksAllowed, setNetworksAllowed] = useState(3);
+  const [tierName, setTierName] = useState<string | null>(null);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
 
   function update(field: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -40,11 +43,26 @@ function WelcomeForm() {
         throw new Error(data.error || "Something went wrong. Please try again.");
       }
       setSubmitted(true);
+      fetch(`/api/subscription-tier?email=${encodeURIComponent(form.email)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setNetworksAllowed(data.networksAllowed ?? 3);
+          setTierName(data.tierName ?? null);
+        })
+        .catch(() => {});
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
     }
+  }
+
+  function toggleSelect(platform: string) {
+    setSelectedPlatforms((prev) => {
+      if (prev.includes(platform)) return prev.filter((p) => p !== platform);
+      if (prev.length >= networksAllowed) return prev;
+      return [...prev, platform];
+    });
   }
 
   async function connect(platform: "tiktok" | "instagram" | "youtube") {
@@ -106,24 +124,46 @@ function WelcomeForm() {
         </ol>
 
         <div className="mt-10 pt-8 border-t border-neutral-800">
-          <h2 className="font-medium text-sm mb-1">Connect your accounts (optional, takes 30 seconds each)</h2>
+          <h2 className="font-medium text-sm mb-1">Connect your accounts</h2>
           <p className="text-xs text-neutral-500 mb-4">
-            You'll authorize directly on TikTok/Instagram/YouTube's own screen — we never see or
+            {tierName ? `Your ${tierName} plan includes` : "Select"} up to {networksAllowed}{" "}
+            connected network{networksAllowed > 1 ? "s" : ""} — pick which one{networksAllowed > 1 ? "s" : ""} you
+            want below. You'll authorize directly on each platform's own screen — we never see or
             store your password. You can also do this later; just reply to our email whenever
             you're ready.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {(["tiktok", "instagram", "youtube"] as const).map((platform) => (
-              <button
-                key={platform}
-                onClick={() => connect(platform)}
-                disabled={connecting !== null}
-                className="rounded-full border border-neutral-800 px-4 py-2 text-sm capitalize hover:border-indigo-400 transition disabled:opacity-50"
-              >
-                {connecting === platform ? "Redirecting..." : `Connect ${platform}`}
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {(["tiktok", "instagram", "youtube"] as const).map((platform) => {
+              const selected = selectedPlatforms.includes(platform);
+              const disabled = !selected && selectedPlatforms.length >= networksAllowed;
+              return (
+                <button
+                  key={platform}
+                  onClick={() => toggleSelect(platform)}
+                  disabled={disabled}
+                  className={`rounded-full border px-4 py-2 text-sm capitalize transition disabled:opacity-40 ${
+                    selected ? "border-indigo-400 bg-indigo-600/10" : "border-neutral-800 hover:border-neutral-700"
+                  }`}
+                >
+                  {platform}
+                </button>
+              );
+            })}
           </div>
+          {selectedPlatforms.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedPlatforms.map((platform) => (
+                <button
+                  key={platform}
+                  onClick={() => connect(platform as "tiktok" | "instagram" | "youtube")}
+                  disabled={connecting !== null}
+                  className="rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-medium capitalize hover:bg-indigo-500 transition disabled:opacity-50"
+                >
+                  {connecting === platform ? "Redirecting..." : `Connect ${platform}`}
+                </button>
+              ))}
+            </div>
+          )}
           {connectError && <p className="text-xs text-red-400 mt-3">{connectError}</p>}
         </div>
       </div>
