@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     success_url: `${origin}/welcome?checkout=success`,
     cancel_url: `${origin}/pricing?checkout=cancel`,
     metadata: { tierId: tier.id },
-    subscription_data: { metadata: { tierId: tier.id } },
+    subscription_data: { metadata: { tierId: tier.id }, trial_period_days: 7 },
   });
 
   return NextResponse.json({ url: session.url });
