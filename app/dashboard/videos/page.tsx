@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, CheckCircle2, XCircle, Play } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Play, Search } from "lucide-react";
 
 type Product = { id: string; name: string };
 type Video = {
@@ -18,6 +18,7 @@ type Avatar = {
   previewImageUrl: string | null;
   previewVideoUrl: string | null;
   defaultVoiceId: string | null;
+  gender: string | null;
 };
 
 export default function VideosPage() {
@@ -27,6 +28,8 @@ export default function VideosPage() {
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [avatarsDemoMode, setAvatarsDemoMode] = useState(false);
   const [selectedAvatarId, setSelectedAvatarId] = useState<string>("");
+  const [avatarSearch, setAvatarSearch] = useState("");
+  const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
   const [generating, setGenerating] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -102,6 +105,14 @@ export default function VideosPage() {
     refresh();
   }
 
+  const filteredAvatars = avatars.filter((a) => {
+    if (genderFilter !== "all" && a.gender !== genderFilter) return false;
+    if (avatarSearch && !a.name.toLowerCase().includes(avatarSearch.toLowerCase())) return false;
+    return true;
+  });
+
+  const selectedAvatar = avatars.find((a) => a.id === selectedAvatarId);
+
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-8">Videos</h1>
@@ -135,34 +146,68 @@ export default function VideosPage() {
               video is used.
             </p>
           ) : avatars.length > 0 ? (
-            <div>
-              <p className="text-sm text-neutral-500 mb-2">Choose an avatar (optional):</p>
-              <div className="flex flex-wrap gap-3">
+            <div className="rounded-xl border border-neutral-800 p-3">
+              <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+                <p className="text-sm text-neutral-300">
+                  Avatar: <span className="text-neutral-100 font-medium">{selectedAvatar ? selectedAvatar.name : "Auto (let AI pick)"}</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 rounded-lg bg-neutral-900 border border-neutral-800 px-2 py-1">
+                    <Search size={13} className="text-neutral-600" />
+                    <input
+                      value={avatarSearch}
+                      onChange={(e) => setAvatarSearch(e.target.value)}
+                      placeholder="Search avatars..."
+                      className="bg-transparent text-xs text-neutral-100 placeholder-neutral-600 outline-none w-32"
+                    />
+                  </div>
+                  <div className="flex rounded-lg border border-neutral-800 overflow-hidden text-xs">
+                    {(["all", "female", "male"] as const).map((g) => (
+                      <button
+                        key={g}
+                        onClick={() => setGenderFilter(g)}
+                        className={`px-2.5 py-1.5 capitalize transition ${
+                          genderFilter === g ? "bg-indigo-600 text-white" : "text-neutral-500 hover:bg-neutral-900"
+                        }`}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5 max-h-64 overflow-y-auto pr-1">
                 <button
                   onClick={() => setSelectedAvatarId("")}
-                  className={`rounded-lg border px-3 py-2 text-xs text-neutral-400 transition ${
+                  className={`flex flex-col items-center justify-center gap-1 w-20 h-24 rounded-lg border p-2 transition shrink-0 ${
                     selectedAvatarId === "" ? "border-indigo-400 bg-indigo-600/10" : "border-neutral-800 hover:border-neutral-700"
                   }`}
                 >
-                  Auto (let AI pick)
+                  <span className="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center text-lg">✨</span>
+                  <span className="text-[10px] text-neutral-500 text-center leading-tight">Auto</span>
                 </button>
-                {avatars.map((a) => (
+                {filteredAvatars.map((a) => (
                   <button
                     key={a.id}
                     onClick={() => setSelectedAvatarId(a.id)}
-                    className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition ${
+                    title={a.name}
+                    className={`flex flex-col items-center gap-1 w-20 rounded-lg border p-2 transition shrink-0 ${
                       selectedAvatarId === a.id ? "border-indigo-400 bg-indigo-600/10" : "border-neutral-800 hover:border-neutral-700"
                     }`}
                   >
                     {a.previewImageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.previewImageUrl} alt={a.name} className="w-16 h-16 object-cover rounded-md" />
+                      <img src={a.previewImageUrl} alt={a.name} className="w-14 h-14 object-cover rounded-full" />
                     ) : (
-                      <div className="w-16 h-16 rounded-md bg-neutral-800" />
+                      <div className="w-14 h-14 rounded-full bg-neutral-800" />
                     )}
-                    <span className="text-xs text-neutral-500 max-w-[4.5rem] truncate">{a.name}</span>
+                    <span className="text-[10px] text-neutral-500 max-w-[4.5rem] truncate">{a.name}</span>
                   </button>
                 ))}
+                {filteredAvatars.length === 0 && (
+                  <p className="text-xs text-neutral-600 py-4">No avatars match your search.</p>
+                )}
               </div>
             </div>
           ) : null}

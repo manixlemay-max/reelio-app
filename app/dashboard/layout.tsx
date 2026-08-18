@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { LayoutDashboard, Users, PackagePlus, Video, CalendarClock, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, Package, Video, CalendarClock, BarChart3 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 import Logo from "@/components/Logo";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/clients", label: "Clients", icon: Users },
-  { href: "/dashboard/products/new", label: "Add a product", icon: PackagePlus },
+  { href: "/dashboard/products", label: "Products", icon: Package },
   { href: "/dashboard/videos", label: "Videos", icon: Video },
   { href: "/dashboard/schedule", label: "Schedule", icon: CalendarClock },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },

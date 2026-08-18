@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Pencil } from "lucide-react";
 
 type Video = { id: string; productName: string; status: string; videoUrl: string | null };
 type Post = { id: string; platform: string; hashtags: string; scheduledAt: string; status: string; productName: string };
@@ -30,6 +30,9 @@ export default function SchedulePage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   async function refresh() {
     const [videosRes, postsRes] = await Promise.all([
@@ -66,6 +69,35 @@ export default function SchedulePage() {
       setScheduledAt("");
       setShowForm(false);
     }
+    refresh();
+  }
+
+  async function removePost(id: string) {
+    if (!confirm("Remove this scheduled post?")) return;
+    setBusyId(id);
+    await fetch(`/api/posts/${id}`, { method: "DELETE" });
+    setBusyId(null);
+    refresh();
+  }
+
+  function startEdit(p: Post) {
+    setEditingId(p.id);
+    // datetime-local expects "YYYY-MM-DDTHH:mm"
+    const d = new Date(p.scheduledAt);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setEditValue(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+  }
+
+  async function saveEdit(id: string) {
+    if (!editValue) return;
+    setBusyId(id);
+    await fetch(`/api/posts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scheduledAt: new Date(editValue).toISOString() }),
+    });
+    setBusyId(null);
+    setEditingId(null);
     refresh();
   }
 
@@ -227,14 +259,58 @@ export default function SchedulePage() {
         {posts.map((p) => (
           <li key={p.id} className="rounded-xl border border-neutral-800 p-4 flex items-center gap-3">
             <span className={`w-2 h-2 rounded-full shrink-0 ${PLATFORM_COLOR[p.platform] ?? "bg-neutral-500"}`} />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="font-medium">
                 {p.productName} · {p.platform}
               </p>
-              <p className="text-sm text-neutral-500">
-                {new Date(p.scheduledAt).toLocaleString("en-US")} · {p.status}
-              </p>
+              {editingId === p.id ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <input
+                    type="datetime-local"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-2 py-1 text-xs"
+                  />
+                  <button
+                    onClick={() => saveEdit(p.id)}
+                    disabled={busyId === p.id}
+                    className="text-xs rounded-full bg-indigo-600 text-white px-3 py-1 hover:bg-indigo-500 transition disabled:opacity-50"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingId(null)}
+                    className="text-xs text-neutral-500 hover:text-neutral-300 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-500">
+                  {new Date(p.scheduledAt).toLocaleString("en-US")} · {p.status}
+                </p>
+              )}
             </div>
+            {editingId !== p.id && (
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => startEdit(p)}
+                  disabled={busyId === p.id}
+                  title="Change date/time"
+                  className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-900 hover:text-neutral-300 transition disabled:opacity-50"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  onClick={() => removePost(p.id)}
+                  disabled={busyId === p.id}
+                  title="Remove"
+                  className="rounded-lg p-1.5 text-red-400 hover:bg-red-500/10 transition disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            )}
           </li>
         ))}
       </ul>

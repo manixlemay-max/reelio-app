@@ -191,6 +191,27 @@ export async function getProduct(id: string): Promise<Product | undefined> {
   return rows[0] ? toProduct(rows[0]) : undefined;
 }
 
+// Cascades: removes analytics + posts + videos tied to this product before
+// removing the product itself, so nothing orphaned is left behind.
+export async function deleteProduct(id: string): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`
+    DELETE FROM analytics WHERE post_id IN (
+      SELECT posts.id FROM posts
+      JOIN videos ON videos.id = posts.video_id
+      WHERE videos.product_id = ${id}
+    )
+  `;
+  await sql`
+    DELETE FROM posts WHERE video_id IN (
+      SELECT id FROM videos WHERE product_id = ${id}
+    )
+  `;
+  await sql`DELETE FROM videos WHERE product_id = ${id}`;
+  await sql`DELETE FROM products WHERE id = ${id}`;
+}
+
 // --- Videos ---
 export async function createVideo(input: {
   productId: string;
@@ -273,6 +294,19 @@ export async function createPost(input: {
     status: input.status,
     createdAt,
   };
+}
+
+export async function deletePost(id: string): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`DELETE FROM analytics WHERE post_id = ${id}`;
+  await sql`DELETE FROM posts WHERE id = ${id}`;
+}
+
+export async function updatePostSchedule(id: string, scheduledAt: string): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`UPDATE posts SET scheduled_at = ${scheduledAt} WHERE id = ${id}`;
 }
 
 export async function listPosts(): Promise<(Post & { videoUrl: string | null; productName: string })[]> {
