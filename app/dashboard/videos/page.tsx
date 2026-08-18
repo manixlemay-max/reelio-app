@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, CheckCircle2, XCircle, Play, Search } from "lucide-react";
+import Link from "next/link";
+import { Loader2, CheckCircle2, XCircle, Play, Search, PackagePlus } from "lucide-react";
 
 type Product = { id: string; name: string };
 type Video = {
@@ -117,6 +118,21 @@ export default function VideosPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-8">Videos</h1>
+
+      {products.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-neutral-800 p-8 text-center mb-8">
+          <p className="text-neutral-500 mb-4">
+            You have to add a product first before you can generate a video.
+          </p>
+          <Link
+            href="/dashboard/products/new"
+            className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-500 transition"
+          >
+            <PackagePlus size={16} />
+            Add a product
+          </Link>
+        </div>
+      )}
 
       {products.length > 0 && (
         <div className="mb-8 space-y-5">
