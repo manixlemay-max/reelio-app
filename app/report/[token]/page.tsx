@@ -17,7 +17,13 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
   return (
     <main className="flex-1 mx-auto max-w-3xl px-6 py-16 w-full">
       <p className="text-sm text-neutral-500 mb-1">Reelio report for</p>
-      <h1 className="text-2xl font-semibold mb-10">{lead.businessName}</h1>
+      <h1 className="text-2xl font-semibold mb-4">{lead.businessName}</h1>
+
+      <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 px-4 py-3 mb-10 text-xs text-neutral-500">
+        This is your private, always-up-to-date report — bookmark this page, no login needed.
+        New videos are created and posted automatically based on your plan; check back here
+        any time to see what's live and how it's performing.
+      </div>
 
       <div className="grid grid-cols-3 gap-4 mb-12">
         <Stat label="Total views" value={totalViews} />

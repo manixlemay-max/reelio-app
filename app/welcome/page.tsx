@@ -47,12 +47,44 @@ function WelcomeForm() {
 
   if (submitted) {
     return (
-      <div className="max-w-lg mx-auto text-center py-20 px-6">
-        <h1 className="text-2xl font-semibold mb-4">Thank you!</h1>
-        <p className="text-neutral-500">
-          We've got your info. Our team will reach out shortly to get your first videos
-          in motion.
-        </p>
+      <div className="max-w-lg mx-auto py-20 px-6">
+        <div className="text-center mb-10">
+          <h1 className="text-2xl font-semibold mb-3">You're all set!</h1>
+          <p className="text-neutral-500">
+            We've got your info. Here's exactly what happens from here.
+          </p>
+        </div>
+
+        <ol className="space-y-5">
+          {[
+            {
+              title: "We create your first video",
+              body: "Our team generates an AI UGC-style video for your product. This usually takes a few days.",
+            },
+            {
+              title: "We post it for you",
+              body: "Once it's ready, we schedule and publish it to your connected social accounts at the best time — no action needed from you.",
+            },
+            {
+              title: "You get a private report link",
+              body: "We'll send you a personal link where you can see your videos and their performance (views, likes, comments) any time — no login required.",
+            },
+            {
+              title: "We keep going",
+              body: "New videos go out automatically every month based on your plan. Questions any time? Just reply to our email.",
+            },
+          ].map((step, i) => (
+            <li key={i} className="flex gap-4">
+              <span className="shrink-0 w-7 h-7 rounded-full bg-indigo-600 text-white text-sm font-medium flex items-center justify-center">
+                {i + 1}
+              </span>
+              <div>
+                <p className="font-medium text-sm mb-0.5">{step.title}</p>
+                <p className="text-sm text-neutral-500">{step.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </div>
     );
   }
