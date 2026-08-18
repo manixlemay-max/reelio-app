@@ -18,6 +18,8 @@ function WelcomeForm() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   function update(field: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -42,6 +44,22 @@ function WelcomeForm() {
       setError((err as Error).message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function connect(platform: "tiktok" | "instagram" | "youtube") {
+    setConnecting(platform);
+    setConnectError(null);
+    try {
+      const res = await fetch(`/api/postiz/connect?platform=${platform}`);
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Could not start connection. Try again shortly.");
+      }
+      window.location.href = data.url;
+    } catch (err) {
+      setConnectError((err as Error).message);
+      setConnecting(null);
     }
   }
 
@@ -86,6 +104,28 @@ function WelcomeForm() {
             </li>
           ))}
         </ol>
+
+        <div className="mt-10 pt-8 border-t border-neutral-800">
+          <h2 className="font-medium text-sm mb-1">Connect your accounts (optional, takes 30 seconds each)</h2>
+          <p className="text-xs text-neutral-500 mb-4">
+            You'll authorize directly on TikTok/Instagram/YouTube's own screen — we never see or
+            store your password. You can also do this later; just reply to our email whenever
+            you're ready.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(["tiktok", "instagram", "youtube"] as const).map((platform) => (
+              <button
+                key={platform}
+                onClick={() => connect(platform)}
+                disabled={connecting !== null}
+                className="rounded-full border border-neutral-800 px-4 py-2 text-sm capitalize hover:border-indigo-400 transition disabled:opacity-50"
+              >
+                {connecting === platform ? "Redirecting..." : `Connect ${platform}`}
+              </button>
+            ))}
+          </div>
+          {connectError && <p className="text-xs text-red-400 mt-3">{connectError}</p>}
+        </div>
       </div>
     );
   }

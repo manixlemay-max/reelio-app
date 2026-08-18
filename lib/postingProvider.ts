@@ -44,6 +44,20 @@ async function findIntegrationId(apiKey: string, platform: Platform): Promise<st
   return match?.id ?? null;
 }
 
+// Generates a Postiz OAuth "connect" URL for a given platform. A client can
+// open this link and authorize their own TikTok/Instagram/YouTube account
+// directly — it lands in Manix's Postiz workspace without him being on a
+// call or ever seeing the client's password. See:
+// https://docs.postiz.com/general/channels/customers.md ("Invite links")
+export async function getConnectUrl(platform: Platform): Promise<string | null> {
+  const apiKey = process.env.POSTING_PROVIDER_API_KEY;
+  if (!apiKey) return null;
+  const res = await fetch(`${POSTIZ_BASE}/social/${platform}`, { headers: postizHeaders(apiKey) });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data?.url ?? null;
+}
+
 // Lists every social account connected under this Postiz workspace, so the
 // dashboard can let Manix pick which one belongs to which client.
 export async function listIntegrations(): Promise<Integration[] | null> {
