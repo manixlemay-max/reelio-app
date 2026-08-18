@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { TIERS } from "@/lib/pricing";
 import SiteHeader from "@/components/SiteHeader";
+import PricingCards from "@/components/PricingCards";
 
 export default function HomePage() {
   return (
@@ -28,7 +28,7 @@ export default function HomePage() {
             Try the dashboard
           </Link>
           <Link
-            href="/pricing"
+            href="#pricing"
             className="rounded-full border border-neutral-700 px-6 py-3 font-medium hover:border-neutral-500 transition"
           >
             See pricing
@@ -58,29 +58,12 @@ export default function HomePage() {
         ))}
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 py-16">
-        <h2 className="text-2xl font-semibold text-center mb-10">Pricing</h2>
-        <div className="grid sm:grid-cols-3 gap-6">
-          {TIERS.map((tier) => (
-            <div key={tier.id} className="rounded-2xl border border-neutral-800 p-6 flex flex-col">
-              <h3 className="font-medium mb-1">{tier.name}</h3>
-              <p className="text-3xl font-semibold mb-4">
-                ${tier.priceUsd}<span className="text-sm text-neutral-500 font-normal">/mo</span>
-              </p>
-              <ul className="text-sm text-neutral-500 space-y-2 flex-1 mb-6">
-                <li>{tier.networksAllowed} connected network(s)</li>
-                <li>{tier.videosPerMonth} videos / month</li>
-                <li>Performance analytics + shareable client report</li>
-              </ul>
-              <Link
-                href="/pricing"
-                className="rounded-full border border-neutral-700 px-4 py-2 text-center text-sm hover:border-indigo-400 transition"
-              >
-                Choose {tier.name}
-              </Link>
-            </div>
-          ))}
-        </div>
+      <section id="pricing" className="mx-auto max-w-5xl px-6 py-16 scroll-mt-20">
+        <h2 className="text-2xl font-semibold text-center mb-2">Pricing</h2>
+        <p className="text-neutral-500 text-center mb-10">
+          7-day free trial on every plan. Cancel anytime.
+        </p>
+        <PricingCards highlightTierId="starter" />
       </section>
     </main>
     </>
