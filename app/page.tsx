@@ -14,8 +14,8 @@ export default function HomePage() {
         </h1>
         <p className="text-lg text-neutral-400 max-w-2xl mx-auto mb-10">
           Send us your products. Reelio generates the videos, posts them automatically
-          to TikTok and Instagram at the best time, then analyzes performance
-          against your competitors — every week, hands-free.
+          to TikTok and Instagram at the best time, then tracks performance so
+          you always know what's working — every week, hands-free.
         </p>
         <div className="flex items-center justify-center gap-4">
           <Link
@@ -45,7 +45,7 @@ export default function HomePage() {
           },
           {
             title: "3. Analyze",
-            body: "Views, engagement, and comparison against your competitors to refine the next video.",
+            body: "Views, engagement, and a shareable report you can send to your client — so everyone knows what's working.",
           },
         ].map((step) => (
           <div key={step.title} className="rounded-2xl border border-neutral-800 p-6">
@@ -67,7 +67,7 @@ export default function HomePage() {
               <ul className="text-sm text-neutral-400 space-y-2 flex-1 mb-6">
                 <li>{tier.networksAllowed} connected network(s)</li>
                 <li>{tier.videosPerMonth} videos / month</li>
-                <li>{tier.competitorAnalysis ? "Competitor analysis included" : "Basic performance analytics"}</li>
+                <li>Performance analytics + shareable client report</li>
               </ul>
               <Link
                 href="/pricing"

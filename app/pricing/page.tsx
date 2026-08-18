@@ -50,7 +50,7 @@ export default function PricingPage() {
             <ul className="text-sm text-neutral-400 space-y-2 flex-1 mb-6">
               <li>{tier.networksAllowed} connected network(s)</li>
               <li>{tier.videosPerMonth} videos / month</li>
-              <li>{tier.competitorAnalysis ? "Competitor analysis included" : "Basic performance analytics"}</li>
+              <li>Performance analytics + shareable client report</li>
             </ul>
             <button
               onClick={() => subscribe(tier.id)}
