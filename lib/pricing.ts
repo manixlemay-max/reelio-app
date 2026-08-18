@@ -25,7 +25,7 @@ export const TIERS: Tier[] = [
     id: "pro",
     name: "Pro",
     priceUsd: 199,
-    networksAllowed: 2,
+    networksAllowed: 3,
     videosPerMonth: 100,
     competitorAnalysis: true,
     stripePriceEnvVar: "STRIPE_PRICE_PRO",
