@@ -169,25 +169,67 @@ export type AvatarOption = {
   previewImageUrl: string | null;
   previewVideoUrl: string | null;
   defaultVoiceId: string | null;
+  gender: string | null;
 };
 
 export async function listAvatars(): Promise<AvatarOption[] | null> {
   const apiKey = process.env.VIDEO_PROVIDER_API_KEY;
   if (!apiKey) return null;
 
-  const res = await fetch(`${HEYGEN_BASE}/v3/avatars/looks?ownership=public&limit=50`, {
-    headers: heygenHeaders(apiKey),
-  });
-  if (!res.ok) return null;
-
-  const data = await res.json();
-  const items = data?.data ?? [];
+  // The API returns 50 per page in whatever order HeyGen ranks them, which
+  // can end up skewed toward one gender in just the first page. Pull a few
+  // pages so the picker has real variety, then interleave by gender so both
+  // show up right away instead of one gender dominating the start of the list.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return items.map((item: any) => ({
+  const all: any[] = [];
+  let token: string | undefined;
+  for (let page = 0; page < 3; page++) {
+    const url = new URL(`${HEYGEN_BASE}/v3/avatars/looks`);
+    url.searchParams.set("ownership", "public");
+    url.searchParams.set("limit", "50");
+    if (token) url.searchParams.set("token", token);
+
+    const res = await fetch(url.toString(), { headers: heygenHeaders(apiKey) });
+    if (!res.ok) break;
+    const data = await res.json();
+    all.push(...(data?.data ?? []));
+    if (!data?.has_more || !data?.next_token) break;
+    token = data.next_token;
+  }
+
+  if (all.length === 0) return null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const options: AvatarOption[] = all.map((item: any) => ({
     id: item.id,
     name: item.name,
     previewImageUrl: item.preview_image_url ?? null,
     previewVideoUrl: item.preview_video_url ?? null,
     defaultVoiceId: item.default_voice_id ?? null,
+    gender: item.gender ?? null,
   }));
+
+  // Interleave by gender (male, female, other/unknown) round-robin so the
+  // picker shows a mix instead of 50 of one gender before the next.
+  const groups = new Map<string, AvatarOption[]>();
+  for (const opt of options) {
+    const key = opt.gender ?? "unknown";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(opt);
+  }
+  const buckets = Array.from(groups.values());
+  const interleaved: AvatarOption[] = [];
+  let added = true;
+  while (added) {
+    added = false;
+    for (const bucket of buckets) {
+      const next = bucket.shift();
+      if (next) {
+        interleaved.push(next);
+        added = true;
+      }
+    }
+  }
+
+  return interleaved;
 }
