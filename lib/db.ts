@@ -97,6 +97,8 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS tiktok_integration_id TEXT`;
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS instagram_integration_id TEXT`;
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS youtube_integration_id TEXT`;
+      // Unguessable token used for the client's public, login-free report page.
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS report_token TEXT`;
     })();
   }
   return schemaReady;
@@ -342,6 +344,7 @@ export type Lead = {
   tiktokIntegrationId: string | null;
   instagramIntegrationId: string | null;
   youtubeIntegrationId: string | null;
+  reportToken: string | null;
   createdAt: string;
 };
 
@@ -358,6 +361,7 @@ function toLead(row: any): Lead {
     tiktokIntegrationId: row.tiktok_integration_id ?? null,
     instagramIntegrationId: row.instagram_integration_id ?? null,
     youtubeIntegrationId: row.youtube_integration_id ?? null,
+    reportToken: row.report_token ?? null,
     createdAt: row.created_at,
   };
 }
@@ -389,6 +393,7 @@ export async function createLead(input: {
     tiktokIntegrationId: null,
     instagramIntegrationId: null,
     youtubeIntegrationId: null,
+    reportToken: null,
     createdAt,
   };
 }
@@ -405,6 +410,70 @@ export async function getLead(id: string): Promise<Lead | undefined> {
   await ensureSchema();
   const rows = await sql`SELECT * FROM leads WHERE id = ${id}`;
   return rows[0] ? toLead(rows[0]) : undefined;
+}
+
+export async function getLeadByToken(token: string): Promise<Lead | undefined> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM leads WHERE report_token = ${token}`;
+  return rows[0] ? toLead(rows[0]) : undefined;
+}
+
+// Lazily generates a report_token for leads created before this feature
+// existed. Safe to call every time the link is displayed or visited.
+export async function ensureLeadReportToken(id: string): Promise<string> {
+  const sql = getSql();
+  await ensureSchema();
+  const existing = await getLead(id);
+  if (existing?.reportToken) return existing.reportToken;
+  const token = randomUUID();
+  await sql`UPDATE leads SET report_token = ${token} WHERE id = ${id}`;
+  return token;
+}
+
+// Everything a client is allowed to see about their own account: their
+// videos, their scheduled/posted content, and the analytics captured for it.
+// Scoped strictly by lead_id so one client can never see another's data.
+export async function getClientReport(leadId: string): Promise<{
+  videos: (Video & { productName: string })[];
+  posts: (Post & { videoUrl: string | null; productName: string })[];
+  analytics: (AnalyticsRow & { platform: Platform; productName: string })[];
+}> {
+  const sql = getSql();
+  await ensureSchema();
+
+  const videoRows = await sql`
+    SELECT videos.*, products.name as product_name
+    FROM videos JOIN products ON products.id = videos.product_id
+    WHERE products.lead_id = ${leadId}
+    ORDER BY videos.created_at DESC
+  `;
+  const postRows = await sql`
+    SELECT posts.*, videos.video_url as video_url, products.name as product_name
+    FROM posts
+    JOIN videos ON videos.id = posts.video_id
+    JOIN products ON products.id = videos.product_id
+    WHERE products.lead_id = ${leadId}
+    ORDER BY posts.scheduled_at DESC
+  `;
+  const analyticsRows = await sql`
+    SELECT analytics.*, posts.platform as platform, products.name as product_name
+    FROM analytics
+    JOIN posts ON posts.id = analytics.post_id
+    JOIN videos ON videos.id = posts.video_id
+    JOIN products ON products.id = videos.product_id
+    WHERE products.lead_id = ${leadId}
+    ORDER BY analytics.captured_at DESC
+  `;
+
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    videos: videoRows.map((r: any) => ({ ...toVideo(r), productName: r.product_name })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    posts: postRows.map((r: any) => ({ ...toPost(r), videoUrl: r.video_url, productName: r.product_name })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    analytics: analyticsRows.map((r: any) => ({ ...toAnalytics(r), platform: r.platform, productName: r.product_name })),
+  };
 }
 
 // Save which Postiz-connected account (integration id) belongs to this

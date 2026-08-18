@@ -1,5 +1,6 @@
-import { listLeads, listSubscriptions } from "@/lib/db";
+import { listLeads, listSubscriptions, ensureLeadReportToken } from "@/lib/db";
 import LeadIntegrations from "@/components/LeadIntegrations";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,14 @@ function statusBadge(status: string | undefined) {
 export default async function ClientsPage() {
   const [leads, subscriptions] = await Promise.all([listLeads(), listSubscriptions()]);
   const subsByEmail = new Map(subscriptions.map((s) => [s.email?.toLowerCase(), s]));
+
+  const h = await headers();
+  const host = h.get("host");
+  const proto = host?.startsWith("localhost") ? "http" : "https";
+  const baseUrl = host ? `${proto}://${host}` : "";
+
+  const reportTokens = await Promise.all(leads.map((lead) => ensureLeadReportToken(lead.id)));
+  const tokenByLeadId = new Map(leads.map((lead, i) => [lead.id, reportTokens[i]]));
 
   return (
     <div>
@@ -49,6 +58,16 @@ export default async function ClientsPage() {
                   <p className="text-xs text-neutral-500 mt-1">Notes: {lead.notes}</p>
                 )}
                 <LeadIntegrations lead={lead} />
+                <p className="text-xs text-neutral-600 mt-2 break-all">
+                  Client report link:{" "}
+                  <a
+                    href={`${baseUrl}/report/${tokenByLeadId.get(lead.id)}`}
+                    target="_blank"
+                    className="text-emerald-400 hover:underline"
+                  >
+                    {baseUrl}/report/{tokenByLeadId.get(lead.id)}
+                  </a>
+                </p>
               </div>
             );
           })}
