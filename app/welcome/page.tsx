@@ -49,9 +49,10 @@ function WelcomeForm() {
     return (
       <div className="max-w-lg mx-auto py-20 px-6">
         <div className="text-center mb-10">
-          <h1 className="text-2xl font-semibold mb-3">You're all set!</h1>
+          <h1 className="text-2xl font-semibold mb-3">Thank you — you're all set!</h1>
           <p className="text-neutral-500">
-            We've got your info. Here's exactly what happens from here.
+            We've got your info and we're excited to work with you. Here's exactly what
+            happens from here.
           </p>
         </div>
 
