@@ -38,21 +38,25 @@ export default function PricingCards({ highlightTierId = "starter" }: { highligh
           return (
             <div
               key={tier.id}
-              className={`relative rounded-2xl border p-6 flex flex-col transition ${
-                highlighted ? "border-indigo-500 bg-indigo-500/5" : "border-neutral-800"
+              className={`relative rounded-2xl border p-6 pt-14 flex flex-col transition ${
+                highlighted
+                  ? "border-indigo-500 bg-gradient-to-b from-indigo-500/10 to-transparent shadow-[0_0_40px_-12px_rgba(129,90,246,0.5)]"
+                  : "border-neutral-800"
               }`}
             >
+              <span className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 flex items-center gap-1">
+                ✨ 7-day free trial
+              </span>
               {highlighted && (
-                <span className="absolute -top-3 left-6 rounded-full bg-indigo-600 text-white text-xs font-medium px-3 py-1">
-                  7-day free trial
+                <span className="absolute -top-3 right-4 rounded-full bg-white text-neutral-950 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1">
+                  Most popular
                 </span>
               )}
               <h3 className="font-medium mb-1">{tier.name}</h3>
-              <p className="text-3xl font-semibold mb-1">
+              <p className="text-3xl font-semibold mb-4">
                 ${tier.priceUsd}
                 <span className="text-sm text-neutral-500 font-normal">/mo</span>
               </p>
-              <p className="text-xs text-neutral-500 mb-4">7-day free trial included</p>
               <ul className="text-sm text-neutral-500 space-y-2 flex-1 mb-6">
                 <li>{tier.networksAllowed} connected network(s)</li>
                 <li>{tier.videosPerMonth} videos / month</li>
@@ -67,7 +71,7 @@ export default function PricingCards({ highlightTierId = "starter" }: { highligh
                     : "border border-neutral-700 hover:border-indigo-400"
                 }`}
               >
-                {loadingTier === tier.id ? "Redirecting..." : `Subscribe to ${tier.name}`}
+                {loadingTier === tier.id ? "Redirecting..." : `Start free trial`}
               </button>
             </div>
           );

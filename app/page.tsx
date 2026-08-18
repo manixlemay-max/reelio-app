@@ -7,32 +7,42 @@ export default function HomePage() {
     <>
     <SiteHeader />
     <main className="flex-1">
-      <section className="mx-auto max-w-5xl px-6 pt-24 pb-16 text-center">
-        <p className="text-sm font-medium text-indigo-400 mb-4">
-          For e-commerce brands
-        </p>
-        <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight mb-6">
-          AI-generated UGC videos,
-          <br /> posted and analyzed for you.
-        </h1>
-        <p className="text-lg text-neutral-500 max-w-2xl mx-auto mb-10">
-          Send us your products. Reelio generates the videos, posts them automatically
-          to TikTok and Instagram at the best time, then tracks performance so
-          you always know what's working — every week, hands-free.
-        </p>
-        <div className="flex items-center justify-center gap-4">
-          <Link
-            href="/dashboard"
-            className="rounded-full bg-indigo-600 text-white px-6 py-3 font-medium hover:bg-indigo-500 transition"
-          >
-            Try the dashboard
-          </Link>
-          <Link
-            href="#pricing"
-            className="rounded-full border border-neutral-700 px-6 py-3 font-medium hover:border-neutral-500 transition"
-          >
-            See pricing
-          </Link>
+      <section className="relative mx-auto max-w-5xl px-6 pt-24 pb-16 text-center overflow-hidden">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[36rem] h-[36rem] rounded-full bg-indigo-600/20 blur-[100px]"
+        />
+        <div className="relative">
+          <p className="inline-flex items-center gap-2 text-sm font-medium text-indigo-400 mb-6 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+            Built for e-commerce brands that want more sales, not more busywork
+          </p>
+          <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight mb-6">
+            AI-generated UGC videos,
+            <br />
+            <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+              posted and analyzed for you.
+            </span>
+          </h1>
+          <p className="text-lg text-neutral-400 max-w-2xl mx-auto mb-10">
+            Send us your products. Reelio generates the videos, posts them automatically
+            to TikTok and Instagram at the best time, then tracks performance so
+            you always know what's working — every week, hands-free.
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <Link
+              href="#pricing"
+              className="rounded-full bg-indigo-600 text-white px-6 py-3 font-medium hover:bg-indigo-500 transition shadow-[0_0_30px_-8px_rgba(129,90,246,0.7)]"
+            >
+              Start your 7-day free trial
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-full border border-neutral-700 px-6 py-3 font-medium hover:border-neutral-500 transition"
+            >
+              Try the dashboard
+            </Link>
+          </div>
         </div>
       </section>
 
