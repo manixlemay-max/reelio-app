@@ -11,7 +11,7 @@ export default function PricingPage() {
         7-day free trial on every plan. Cancel anytime. The number of connected social
         networks depends on your plan.
       </p>
-      <PricingCards highlightTierId="starter" />
+      <PricingCards highlightTierId="growth" />
     </main>
     </>
   );

@@ -10,7 +10,7 @@ export default function HomePage() {
       <section className="relative mx-auto max-w-5xl px-6 pt-24 pb-16 text-center overflow-hidden">
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[36rem] h-[36rem] rounded-full bg-indigo-600/20 blur-[100px]"
+          className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[36rem] h-[36rem] rounded-full bg-blue-600/20 blur-[100px]"
         />
         <div className="relative">
           <p className="inline-flex items-center gap-2 text-sm font-medium text-indigo-400 mb-6 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5">
@@ -20,7 +20,7 @@ export default function HomePage() {
           <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight mb-6">
             AI-generated UGC videos,
             <br />
-            <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 bg-clip-text text-transparent">
               posted and analyzed for you.
             </span>
           </h1>
@@ -32,7 +32,7 @@ export default function HomePage() {
           <div className="flex items-center justify-center gap-4">
             <Link
               href="#pricing"
-              className="rounded-full bg-indigo-600 text-white px-6 py-3 font-medium hover:bg-indigo-500 transition shadow-[0_0_30px_-8px_rgba(129,90,246,0.7)]"
+              className="rounded-full bg-indigo-600 text-white px-6 py-3 font-medium hover:bg-indigo-500 transition shadow-[0_0_30px_-8px_rgba(59,130,246,0.7)]"
             >
               Start your 7-day free trial
             </Link>
@@ -73,7 +73,7 @@ export default function HomePage() {
         <p className="text-neutral-500 text-center mb-10">
           7-day free trial on every plan. Cancel anytime.
         </p>
-        <PricingCards highlightTierId="starter" />
+        <PricingCards highlightTierId="growth" />
       </section>
     </main>
     </>

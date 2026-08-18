@@ -40,7 +40,7 @@ export default function PricingCards({ highlightTierId = "starter" }: { highligh
               key={tier.id}
               className={`relative rounded-2xl border p-6 pt-14 flex flex-col transition ${
                 highlighted
-                  ? "border-indigo-500 bg-gradient-to-b from-indigo-500/10 to-transparent shadow-[0_0_40px_-12px_rgba(129,90,246,0.5)]"
+                  ? "border-blue-500 bg-gradient-to-b from-blue-500/10 to-transparent shadow-[0_0_40px_-12px_rgba(59,130,246,0.5)]"
                   : "border-neutral-800"
               }`}
             >
