@@ -1,10 +1,18 @@
 // Integration with HeyGen (heygen.com) — AI video generation.
 // Docs used to build this: https://developers.heygen.com/docs/quick-start
 //
-// Flow: prompt -> Video Agent session -> video_id -> poll video status.
-// This is async and can take longer than a single request, so generateVideo()
-// only *starts* the job and returns "pending". A separate checkVideoProgress()
-// call (used by /api/videos/[id]/refresh) polls until it's done.
+// Two ways to generate a video:
+// 1. Video Agent (default, no avatar chosen): prompt -> HeyGen picks everything
+//    (avatar, voice, scene) -> video. Async: POST /v3/video-agents returns a
+//    session_id, which we poll for a video_id, which we then poll for status.
+// 2. Explicit avatar (when the dashboard user picks one from the avatar
+//    picker): POST /v3/videos with type "avatar", a specific avatar_id, a
+//    script we write, and that avatar's default voice_id. This returns a
+//    video_id directly (no session step).
+//
+// Both flows converge on the same GET /v3/videos/{video_id} status endpoint,
+// so checkVideoProgress() just needs to know which flow started the job. We
+// tag externalJobId with a small prefix ("avatar:" or "agent:") to remember.
 
 const HEYGEN_BASE = process.env.VIDEO_PROVIDER_API_URL || "https://api.heygen.com";
 
@@ -12,6 +20,10 @@ type GenerateVideoInput = {
   productName: string;
   productDescription: string;
   imageUrl?: string | null;
+  // If set (from the avatar picker in the dashboard), use the explicit
+  // avatar flow instead of letting HeyGen's Video Agent auto-pick one.
+  avatarId?: string | null;
+  voiceId?: string | null;
 };
 
 type GenerateVideoResult = {
@@ -35,11 +47,6 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
     // without a paid provider AND without depending on a third-party host that
     // might block server-to-server fetches (some hosts return 403 to fetches
     // without a browser-like origin).
-    // Prefer an explicitly configured public URL, then Vercel's stable
-    // production domain, then the per-deployment URL, then localhost.
-    // (The per-deployment VERCEL_URL can be behind Vercel's deployment
-    // protection even when the main domain isn't, which would block our
-    // own server from fetching its own file.)
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
@@ -52,6 +59,38 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
     };
   }
 
+  // --- Explicit avatar chosen in the dashboard ---
+  if (input.avatarId) {
+    const script = `Hey! I have to tell you about ${input.productName}. ${input.productDescription} Honestly, it's been such a game changer for me — you have to try it for yourself. Grab yours today!`;
+
+    const res = await fetch(`${HEYGEN_BASE}/v3/videos`, {
+      method: "POST",
+      headers: heygenHeaders(apiKey, { "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        type: "avatar",
+        avatar_id: input.avatarId,
+        script,
+        voice_id: input.voiceId || undefined,
+        resolution: "1080p",
+        aspect_ratio: "9:16",
+        title: `${input.productName} — Reelio UGC video`,
+      }),
+    });
+
+    if (!res.ok) {
+      return { status: "failed", videoUrl: null, provider: "heygen" };
+    }
+
+    const data = await res.json();
+    const videoId = data?.data?.video_id ?? null;
+    if (!videoId) {
+      return { status: "failed", videoUrl: null, provider: "heygen" };
+    }
+
+    return { status: "pending", videoUrl: null, provider: "heygen", externalJobId: `avatar:${videoId}` };
+  }
+
+  // --- Default: Video Agent picks the avatar/voice/scene automatically ---
   const prompt = `A short, energetic UGC-style product video (under 30 seconds) for an
 e-commerce product called "${input.productName}". Product description: ${input.productDescription}.
 The video should feel like an authentic social media video promoting this product, with an
@@ -74,27 +113,12 @@ enthusiastic presenter highlighting what makes it worth buying.`;
     return { status: "failed", videoUrl: null, provider: "heygen" };
   }
 
-  return { status: "pending", videoUrl: null, provider: "heygen", externalJobId: sessionId };
+  return { status: "pending", videoUrl: null, provider: "heygen", externalJobId: `agent:${sessionId}` };
 }
 
 type ProgressResult = { status: "ready" | "pending" | "failed"; videoUrl: string | null };
 
-// Called by /api/videos/[id]/refresh to check on a job started by generateVideo().
-export async function checkVideoProgress(sessionId: string): Promise<ProgressResult> {
-  const apiKey = process.env.VIDEO_PROVIDER_API_KEY;
-  if (!apiKey) return { status: "failed", videoUrl: null };
-
-  // Step 1: does the session have a video_id yet?
-  const sessionRes = await fetch(`${HEYGEN_BASE}/v3/video-agents/${sessionId}`, {
-    headers: heygenHeaders(apiKey),
-  });
-  if (!sessionRes.ok) return { status: "pending", videoUrl: null };
-
-  const sessionData = await sessionRes.json();
-  const videoId = sessionData?.data?.video_id ?? null;
-  if (!videoId) return { status: "pending", videoUrl: null };
-
-  // Step 2: is the video itself done rendering?
+async function pollVideoStatus(apiKey: string, videoId: string): Promise<ProgressResult> {
   const videoRes = await fetch(`${HEYGEN_BASE}/v3/videos/${videoId}`, {
     headers: heygenHeaders(apiKey),
   });
@@ -110,4 +134,60 @@ export async function checkVideoProgress(sessionId: string): Promise<ProgressRes
     return { status: "failed", videoUrl: null };
   }
   return { status: "pending", videoUrl: null };
+}
+
+// Called by /api/videos/[id]/refresh to check on a job started by generateVideo().
+export async function checkVideoProgress(jobId: string): Promise<ProgressResult> {
+  const apiKey = process.env.VIDEO_PROVIDER_API_KEY;
+  if (!apiKey) return { status: "failed", videoUrl: null };
+
+  // Explicit avatar flow: jobId is already a video_id, just poll it.
+  if (jobId.startsWith("avatar:")) {
+    return pollVideoStatus(apiKey, jobId.slice("avatar:".length));
+  }
+
+  // Video Agent flow (also handles jobIds saved before this prefix existed,
+  // which are all Video Agent sessions): session -> video_id -> status.
+  const sessionId = jobId.startsWith("agent:") ? jobId.slice("agent:".length) : jobId;
+
+  const sessionRes = await fetch(`${HEYGEN_BASE}/v3/video-agents/${sessionId}`, {
+    headers: heygenHeaders(apiKey),
+  });
+  if (!sessionRes.ok) return { status: "pending", videoUrl: null };
+
+  const sessionData = await sessionRes.json();
+  const videoId = sessionData?.data?.video_id ?? null;
+  if (!videoId) return { status: "pending", videoUrl: null };
+
+  return pollVideoStatus(apiKey, videoId);
+}
+
+// --- Avatar picker: lets the dashboard list choosable avatars for videos ---
+export type AvatarOption = {
+  id: string;
+  name: string;
+  previewImageUrl: string | null;
+  previewVideoUrl: string | null;
+  defaultVoiceId: string | null;
+};
+
+export async function listAvatars(): Promise<AvatarOption[] | null> {
+  const apiKey = process.env.VIDEO_PROVIDER_API_KEY;
+  if (!apiKey) return null;
+
+  const res = await fetch(`${HEYGEN_BASE}/v3/avatars/looks?ownership=public&limit=50`, {
+    headers: heygenHeaders(apiKey),
+  });
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  const items = data?.data ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return items.map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    previewImageUrl: item.preview_image_url ?? null,
+    previewVideoUrl: item.preview_video_url ?? null,
+    defaultVoiceId: item.default_voice_id ?? null,
+  }));
 }

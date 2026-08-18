@@ -11,11 +11,21 @@ type Video = {
   status: string;
   provider: string;
 };
+type Avatar = {
+  id: string;
+  name: string;
+  previewImageUrl: string | null;
+  previewVideoUrl: string | null;
+  defaultVoiceId: string | null;
+};
 
 export default function VideosPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [avatars, setAvatars] = useState<Avatar[]>([]);
+  const [avatarsDemoMode, setAvatarsDemoMode] = useState(false);
+  const [selectedAvatarId, setSelectedAvatarId] = useState<string>("");
   const [generating, setGenerating] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -34,6 +44,13 @@ export default function VideosPage() {
 
   useEffect(() => {
     refresh();
+    fetch("/api/heygen/avatars")
+      .then((res) => res.json())
+      .then((data) => {
+        setAvatars(data.avatars ?? []);
+        setAvatarsDemoMode(!!data.demoMode);
+      })
+      .catch(() => setAvatars([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -70,10 +87,15 @@ export default function VideosPage() {
   async function generate() {
     if (!selectedProduct) return;
     setGenerating(true);
+    const chosenAvatar = avatars.find((a) => a.id === selectedAvatarId);
     await fetch("/api/generate-video", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: selectedProduct }),
+      body: JSON.stringify({
+        productId: selectedProduct,
+        avatarId: selectedAvatarId || null,
+        voiceId: chosenAvatar?.defaultVoiceId || null,
+      }),
     });
     setGenerating(false);
     refresh();
@@ -84,25 +106,65 @@ export default function VideosPage() {
       <h1 className="text-2xl font-semibold mb-8">Videos</h1>
 
       {products.length > 0 && (
-        <div className="flex items-center gap-3 mb-8">
-          <select
-            value={selectedProduct}
-            onChange={(e) => setSelectedProduct(e.target.value)}
-            className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
-          >
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={generate}
-            disabled={generating}
-            className="rounded-full bg-emerald-500 text-neutral-950 px-4 py-2 text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-50"
-          >
-            {generating ? "Starting..." : "Generate a video"}
-          </button>
+        <div className="mb-8 space-y-5">
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedProduct}
+              onChange={(e) => setSelectedProduct(e.target.value)}
+              className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
+            >
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={generate}
+              disabled={generating}
+              className="rounded-full bg-emerald-500 text-neutral-950 px-4 py-2 text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-50"
+            >
+              {generating ? "Starting..." : "Generate a video"}
+            </button>
+          </div>
+
+          {avatarsDemoMode ? (
+            <p className="text-xs text-neutral-600">
+              Connect a HeyGen API key to pick a specific avatar for this video. Without it, a demo
+              video is used.
+            </p>
+          ) : avatars.length > 0 ? (
+            <div>
+              <p className="text-sm text-neutral-400 mb-2">Choose an avatar (optional):</p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => setSelectedAvatarId("")}
+                  className={`rounded-lg border px-3 py-2 text-xs text-neutral-300 transition ${
+                    selectedAvatarId === "" ? "border-emerald-400 bg-emerald-500/10" : "border-neutral-800 hover:border-neutral-700"
+                  }`}
+                >
+                  Auto (let AI pick)
+                </button>
+                {avatars.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => setSelectedAvatarId(a.id)}
+                    className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition ${
+                      selectedAvatarId === a.id ? "border-emerald-400 bg-emerald-500/10" : "border-neutral-800 hover:border-neutral-700"
+                    }`}
+                  >
+                    {a.previewImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={a.previewImageUrl} alt={a.name} className="w-16 h-16 object-cover rounded-md" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-md bg-neutral-800" />
+                    )}
+                    <span className="text-xs text-neutral-400 max-w-[4.5rem] truncate">{a.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
 

@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
     productName: product.name,
     productDescription: product.description,
     imageUrl: product.imageUrl,
+    avatarId: body.avatarId || null,
+    voiceId: body.voiceId || null,
   });
 
   const video = await createVideo({
