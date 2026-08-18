@@ -1,6 +1,7 @@
-import { listLeads, listSubscriptions, ensureLeadReportToken } from "@/lib/db";
+import { listLeads, listSubscriptions, ensureLeadReportToken, listProducts } from "@/lib/db";
 import LeadIntegrations from "@/components/LeadIntegrations";
 import { headers } from "next/headers";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +13,14 @@ function statusBadge(status: string | undefined) {
 }
 
 export default async function ClientsPage() {
-  const [leads, subscriptions] = await Promise.all([listLeads(), listSubscriptions()]);
+  const [leads, subscriptions, products] = await Promise.all([listLeads(), listSubscriptions(), listProducts()]);
   const subsByEmail = new Map(subscriptions.map((s) => [s.email?.toLowerCase(), s]));
+  const productsByLead = new Map<string, typeof products>();
+  for (const p of products) {
+    if (!p.leadId) continue;
+    if (!productsByLead.has(p.leadId)) productsByLead.set(p.leadId, []);
+    productsByLead.get(p.leadId)!.push(p);
+  }
 
   const h = await headers();
   const host = h.get("host");
@@ -57,6 +64,28 @@ export default async function ClientsPage() {
                 {lead.notes && (
                   <p className="text-xs text-neutral-500 mt-1">Notes: {lead.notes}</p>
                 )}
+                <div className="mt-3 pt-3 border-t border-neutral-900">
+                  <p className="text-xs text-neutral-500 mb-1.5">
+                    Products ({(productsByLead.get(lead.id) ?? []).length})
+                  </p>
+                  {(productsByLead.get(lead.id) ?? []).length === 0 ? (
+                    <p className="text-xs text-neutral-600">
+                      None linked yet —{" "}
+                      <Link href="/dashboard/products" className="text-indigo-400 hover:underline">
+                        link one on the Products page
+                      </Link>
+                      .
+                    </p>
+                  ) : (
+                    <ul className="flex flex-wrap gap-1.5">
+                      {(productsByLead.get(lead.id) ?? []).map((p) => (
+                        <li key={p.id} className="rounded-full bg-neutral-900 border border-neutral-800 px-2.5 py-1 text-xs text-neutral-300">
+                          {p.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
                 <LeadIntegrations lead={lead} />
                 <p className="text-xs text-neutral-500 mt-2 break-all">
                   Client report link:{" "}

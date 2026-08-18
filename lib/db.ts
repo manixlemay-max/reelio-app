@@ -177,6 +177,12 @@ export async function createProduct(input: {
   };
 }
 
+export async function updateProductLead(id: string, leadId: string | null): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`UPDATE products SET lead_id = ${leadId} WHERE id = ${id}`;
+}
+
 export async function listProducts(): Promise<Product[]> {
   const sql = getSql();
   await ensureSchema();
