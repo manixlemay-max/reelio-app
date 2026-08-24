@@ -34,6 +34,9 @@ export async function POST(req: NextRequest) {
     cancel_url: `${origin}/pricing?checkout=cancel`,
     metadata: { tierId: tier.id },
     subscription_data: { metadata: { tierId: tier.id }, trial_period_days: 7 },
+    // Without this, Stripe hides the promo code field entirely — needed for
+    // testing with 100%-off codes and for any future real discounts.
+    allow_promotion_codes: true,
   });
 
   return NextResponse.json({ url: session.url });
