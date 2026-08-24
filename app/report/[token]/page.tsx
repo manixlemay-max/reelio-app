@@ -1,6 +1,7 @@
 import { getLeadByToken, getClientReport } from "@/lib/db";
 import { notFound } from "next/navigation";
 import CancelSubscription from "@/components/CancelSubscription";
+import NeedHelp from "@/components/NeedHelp";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,9 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
         </ul>
       )}
 
-      <div className="mt-12 pt-6 border-t border-neutral-800">
+      <div className="mt-12 pt-6 border-t border-neutral-800 flex flex-wrap items-start gap-3">
+        <NeedHelp token={token} />
+        <span className="text-neutral-700">&middot;</span>
         <CancelSubscription token={token} />
       </div>
     </main>

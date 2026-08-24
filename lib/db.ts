@@ -104,6 +104,17 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT FALSE`;
       await sql`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS cancellation_reason TEXT`;
       await sql`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS cancellation_feedback TEXT`;
+      // Client help requests submitted from their report page (no login,
+      // no need to know Manix's email) — shows up on the Clients dashboard.
+      await sql`
+        CREATE TABLE IF NOT EXISTS support_requests (
+          id TEXT PRIMARY KEY,
+          lead_id TEXT NOT NULL,
+          message TEXT NOT NULL,
+          resolved BOOLEAN NOT NULL DEFAULT FALSE,
+          created_at TEXT NOT NULL
+        )
+      `;
     })();
   }
   return schemaReady;
@@ -672,4 +683,56 @@ export async function getSubscriptionByEmail(email: string): Promise<Subscriptio
   await ensureSchema();
   const rows = await sql`SELECT * FROM subscriptions WHERE email = ${email} ORDER BY updated_at DESC LIMIT 1`;
   return rows[0] ? toSubscription(rows[0]) : undefined;
+}
+
+// --- Support requests (client "need help?" messages from their report page) ---
+export type SupportRequest = {
+  id: string;
+  leadId: string;
+  message: string;
+  resolved: boolean;
+  createdAt: string;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toSupportRequest(row: any): SupportRequest {
+  return {
+    id: row.id,
+    leadId: row.lead_id,
+    message: row.message,
+    resolved: row.resolved,
+    createdAt: row.created_at,
+  };
+}
+
+export async function createSupportRequest(leadId: string, message: string): Promise<SupportRequest> {
+  const sql = getSql();
+  await ensureSchema();
+  const id = randomUUID();
+  const createdAt = new Date().toISOString();
+  await sql`
+    INSERT INTO support_requests (id, lead_id, message, resolved, created_at)
+    VALUES (${id}, ${leadId}, ${message}, FALSE, ${createdAt})
+  `;
+  return { id, leadId, message, resolved: false, createdAt };
+}
+
+export async function listSupportRequestsByLead(leadId: string): Promise<SupportRequest[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM support_requests WHERE lead_id = ${leadId} ORDER BY created_at DESC`;
+  return rows.map(toSupportRequest);
+}
+
+export async function listAllSupportRequests(): Promise<SupportRequest[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`SELECT * FROM support_requests ORDER BY created_at DESC`;
+  return rows.map(toSupportRequest);
+}
+
+export async function resolveSupportRequest(id: string): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`UPDATE support_requests SET resolved = TRUE WHERE id = ${id}`;
 }
