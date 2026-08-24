@@ -1,6 +1,10 @@
 import Link from "next/link";
 import Logo from "./Logo";
 
+// No "Dashboard login" link here on purpose: this header shows on public
+// pages that clients also see (landing, pricing), and clients never use the
+// dashboard — it only led to confused "what's this?" questions. Manix reaches
+// his dashboard directly at /login (bookmark it) instead of via public nav.
 export default function SiteHeader() {
   return (
     <header className="border-b border-neutral-800">
@@ -9,12 +13,6 @@ export default function SiteHeader() {
         <nav className="flex items-center gap-6 text-sm">
           <Link href="/#pricing" className="text-neutral-400 hover:text-neutral-100 transition">
             Pricing
-          </Link>
-          <Link
-            href="/login"
-            className="rounded-full bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-500 transition"
-          >
-            Dashboard login
           </Link>
         </nav>
       </div>
