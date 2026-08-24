@@ -5,12 +5,25 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-function statusBadge(status: string | undefined) {
+function statusBadge(status: string | undefined, cancelAtPeriodEnd: boolean | undefined, periodEnd: string | null | undefined) {
   if (!status) return { text: "No subscription found", color: "text-neutral-500" };
+  if (cancelAtPeriodEnd && (status === "active" || status === "trialing")) {
+    const when = periodEnd ? new Date(periodEnd).toLocaleDateString() : "end of billing period";
+    return { text: `Canceling on ${when}`, color: "text-amber-400" };
+  }
   if (status === "active" || status === "trialing") return { text: `Active (${status})`, color: "text-green-400" };
   if (status === "canceled") return { text: "Canceled", color: "text-red-400" };
   return { text: status, color: "text-amber-400" };
 }
+
+const CANCEL_REASON_LABELS: Record<string, string> = {
+  too_expensive: "It's too expensive",
+  not_using_it: "Not using it enough",
+  missing_features: "Missing something they needed",
+  bad_quality: "Video quality wasn't right for them",
+  switched_provider: "Switched to something else",
+  other: "Other",
+};
 
 export default async function ClientsPage() {
   const [leads, subscriptions, products] = await Promise.all([listLeads(), listSubscriptions(), listProducts()]);
@@ -42,7 +55,7 @@ export default async function ClientsPage() {
         <div className="space-y-4">
           {leads.map((lead) => {
             const sub = subsByEmail.get(lead.email.toLowerCase());
-            const badge = statusBadge(sub?.status);
+            const badge = statusBadge(sub?.status, sub?.cancelAtPeriodEnd, sub?.currentPeriodEnd);
             return (
               <div key={lead.id} className="rounded-lg border border-neutral-800 p-4">
                 <div className="flex items-baseline justify-between mb-2">
@@ -55,6 +68,12 @@ export default async function ClientsPage() {
                   {lead.name} &middot; {lead.email}
                 </p>
                 <p className={`text-xs font-medium mb-2 ${badge.color}`}>{badge.text}</p>
+                {sub?.cancellationReason && (
+                  <p className="text-xs text-neutral-500 mb-2">
+                    Cancellation reason: {CANCEL_REASON_LABELS[sub.cancellationReason] ?? sub.cancellationReason}
+                    {sub.cancellationFeedback ? ` — "${sub.cancellationFeedback}"` : ""}
+                  </p>
+                )}
                 <p className="text-sm text-neutral-400 mb-2 whitespace-pre-wrap">
                   {lead.productDescription}
                 </p>

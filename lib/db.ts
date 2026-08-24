@@ -99,6 +99,11 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS youtube_integration_id TEXT`;
       // Unguessable token used for the client's public, login-free report page.
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS report_token TEXT`;
+      // Self-serve cancellation: whether the client already asked to cancel
+      // (access continues until the period ends), and why they left.
+      await sql`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT FALSE`;
+      await sql`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS cancellation_reason TEXT`;
+      await sql`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS cancellation_feedback TEXT`;
     })();
   }
   return schemaReady;
@@ -587,6 +592,9 @@ export type Subscription = {
   tierId: string | null;
   status: string;
   currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  cancellationReason: string | null;
+  cancellationFeedback: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -600,6 +608,9 @@ function toSubscription(row: any): Subscription {
     tierId: row.tier_id,
     status: row.status,
     currentPeriodEnd: row.current_period_end,
+    cancelAtPeriodEnd: row.cancel_at_period_end ?? false,
+    cancellationReason: row.cancellation_reason ?? null,
+    cancellationFeedback: row.cancellation_feedback ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -614,20 +625,38 @@ export async function upsertSubscription(input: {
   tierId?: string | null;
   status: string;
   currentPeriodEnd?: string | null;
+  cancelAtPeriodEnd?: boolean;
 }): Promise<void> {
   const sql = getSql();
   await ensureSchema();
   const now = new Date().toISOString();
   await sql`
-    INSERT INTO subscriptions (id, customer_id, email, tier_id, status, current_period_end, created_at, updated_at)
-    VALUES (${input.id}, ${input.customerId}, ${input.email ?? null}, ${input.tierId ?? null}, ${input.status}, ${input.currentPeriodEnd ?? null}, ${now}, ${now})
+    INSERT INTO subscriptions (id, customer_id, email, tier_id, status, current_period_end, cancel_at_period_end, created_at, updated_at)
+    VALUES (${input.id}, ${input.customerId}, ${input.email ?? null}, ${input.tierId ?? null}, ${input.status}, ${input.currentPeriodEnd ?? null}, ${input.cancelAtPeriodEnd ?? false}, ${now}, ${now})
     ON CONFLICT (id) DO UPDATE SET
       customer_id = EXCLUDED.customer_id,
       email = COALESCE(EXCLUDED.email, subscriptions.email),
       tier_id = COALESCE(EXCLUDED.tier_id, subscriptions.tier_id),
       status = EXCLUDED.status,
       current_period_end = COALESCE(EXCLUDED.current_period_end, subscriptions.current_period_end),
+      cancel_at_period_end = ${input.cancelAtPeriodEnd ?? false},
       updated_at = ${now}
+  `;
+}
+
+// Records why a client canceled — set directly by the self-serve cancel
+// flow so Manix can see it on the Clients dashboard without opening Stripe.
+export async function recordCancellationFeedback(
+  subscriptionId: string,
+  reason: string,
+  feedback: string | null
+): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`
+    UPDATE subscriptions
+    SET cancellation_reason = ${reason}, cancellation_feedback = ${feedback}, cancel_at_period_end = TRUE, updated_at = ${new Date().toISOString()}
+    WHERE id = ${subscriptionId}
   `;
 }
 

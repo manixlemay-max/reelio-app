@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
         tierId: subscription.metadata?.tierId ?? null,
         status: subscription.status,
         currentPeriodEnd: periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false,
       });
       break;
     }

@@ -1,5 +1,6 @@
 import { getLeadByToken, getClientReport } from "@/lib/db";
 import { notFound } from "next/navigation";
+import CancelSubscription from "@/components/CancelSubscription";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,10 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
           ))}
         </ul>
       )}
+
+      <div className="mt-12 pt-6 border-t border-neutral-800">
+        <CancelSubscription token={token} />
+      </div>
     </main>
   );
 }
