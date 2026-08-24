@@ -1,17 +1,29 @@
 import Link from "next/link";
 
-// A single abstract paisley/loop shape — no literal camera, play button, or
-// clapperboard — in the spirit of minimal one-shape marks like Airbnb's Bélo.
-// Reads as a continuous "reel" loop with a soft point, unique at a glance.
-function Mark() {
+// Monoline "R" mark with small circuit-style connector nodes — same family
+// as the tech/AI logo style Manix pointed to (letterform + accent dots,
+// cyan-to-magenta gradient), built as a distinct shape for Reelio. No
+// background badge: the mark carries its own color and sits directly on
+// the page, closer to a wordmark lockup than an app-icon tile.
+function Mark({ size = 26 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="reelioMark" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#22d3ee" />
+          <stop offset="55%" stopColor="#6366f1" />
+          <stop offset="100%" stopColor="#d946ef" />
+        </linearGradient>
+      </defs>
       <path
-        d="M12 2C7.6 2 4 5.6 4 10c0 5.2 5.2 9.6 7.3 11.2.4.3 1 .3 1.4 0C14.8 19.6 20 15.2 20 10c0-4.4-3.6-8-8-8Zm0 11.2A5.2 5.2 0 1 1 12 3.8a5.2 5.2 0 0 1 0 9.4Z"
-        fill="white"
-        fillRule="evenodd"
-        clipRule="evenodd"
+        d="M6 20V4h7a4 4 0 0 1 0 8H6M13 12l6 8"
+        stroke="url(#reelioMark)"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
+      <circle cx="16" cy="4" r="1.3" fill="url(#reelioMark)" />
+      <circle cx="19" cy="20" r="1.3" fill="url(#reelioMark)" />
     </svg>
   );
 }
@@ -19,9 +31,7 @@ function Mark() {
 export default function Logo({ href = "/" }: { href?: string }) {
   return (
     <Link href={href} className="flex items-center gap-2 shrink-0">
-      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 via-blue-500 to-blue-600 shadow-[0_0_20px_-4px_rgba(59,130,246,0.7)]">
-        <Mark />
-      </span>
+      <Mark />
       <span className="text-lg font-semibold tracking-tight text-neutral-100">Reelio</span>
     </Link>
   );

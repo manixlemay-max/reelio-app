@@ -20,7 +20,7 @@ export default function HomePage() {
           <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight mb-6">
             AI-generated UGC videos,
             <br />
-            <span className="bg-gradient-to-r from-sky-400 via-blue-500 to-blue-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 bg-clip-text text-transparent">
               posted and analyzed for you.
             </span>
           </h1>
