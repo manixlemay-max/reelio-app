@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClipboardList, Sparkles, CalendarClock, TrendingUp } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import PricingCards from "@/components/PricingCards";
 
@@ -37,35 +38,58 @@ export default function HomePage() {
               Start your 7-day free trial
             </Link>
             <Link
-              href="/dashboard"
+              href="#how-it-works"
               className="rounded-full border border-neutral-700 px-6 py-3 font-medium hover:border-neutral-500 transition"
             >
-              Try the dashboard
+              See how it works
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-6 py-16 grid sm:grid-cols-3 gap-6">
-        {[
-          {
-            title: "1. Generate",
-            body: "Add a product, Reelio generates a UGC-style video ready to post using an AI provider.",
-          },
-          {
-            title: "2. Post",
-            body: "Automatic scheduling on TikTok and Instagram, with the right hashtags and optimal time.",
-          },
-          {
-            title: "3. Analyze",
-            body: "Views, engagement, and a shareable report you can send to your client — so everyone knows what's working.",
-          },
-        ].map((step) => (
-          <div key={step.title} className="rounded-2xl border border-neutral-800 p-6">
-            <h3 className="font-medium mb-2">{step.title}</h3>
-            <p className="text-sm text-neutral-500">{step.body}</p>
-          </div>
-        ))}
+      <section id="how-it-works" className="mx-auto max-w-5xl px-6 py-20 scroll-mt-20">
+        <div className="text-center mb-14">
+          <h2 className="text-2xl sm:text-3xl font-semibold mb-3">How Reelio works</h2>
+          <p className="text-neutral-500 max-w-xl mx-auto">
+            One short form, and Reelio takes it from there — content, posting, and strategy,
+            fully automated and backed by real performance data.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-6">
+          {[
+            {
+              icon: ClipboardList,
+              title: "Tell us about your product",
+              body: "A single 2-minute form is the only thing you'll ever have to do. No filming, no scripts, no editing software — Reelio takes it from there.",
+            },
+            {
+              icon: Sparkles,
+              title: "AI creates scroll-stopping UGC videos",
+              body: "Your own AI-generated creator delivers an authentic, on-brand video for your product — the kind of native, trust-building content that outperforms polished ads, without hiring a single actor or crew.",
+            },
+            {
+              icon: CalendarClock,
+              title: "Posted automatically at the best time",
+              body: "Every video is published straight to your TikTok, Instagram, and YouTube — timed using real engagement data from your own audience, not guesswork, so it lands when people are actually watching.",
+            },
+            {
+              icon: TrendingUp,
+              title: "Results tracked, strategy refined",
+              body: "Views, likes, and comments are tracked automatically. Reelio uses what's working to guide what gets made and posted next, so your results compound month after month — hands-free.",
+            },
+          ].map((step) => {
+            const Icon = step.icon;
+            return (
+              <div key={step.title} className="rounded-2xl border border-neutral-800 p-6">
+                <span className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 mb-4">
+                  <Icon size={18} strokeWidth={2} />
+                </span>
+                <h3 className="font-medium mb-2">{step.title}</h3>
+                <p className="text-sm text-neutral-500 leading-relaxed">{step.body}</p>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       <section id="pricing" className="mx-auto max-w-5xl px-6 py-16 scroll-mt-20">
