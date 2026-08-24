@@ -115,6 +115,9 @@ function ensureSchema(): Promise<void> {
           created_at TEXT NOT NULL
         )
       `;
+      // Manix's in-app reply, shown back to the client on their report page.
+      await sql`ALTER TABLE support_requests ADD COLUMN IF NOT EXISTS response TEXT`;
+      await sql`ALTER TABLE support_requests ADD COLUMN IF NOT EXISTS responded_at TEXT`;
     })();
   }
   return schemaReady;
@@ -691,6 +694,8 @@ export type SupportRequest = {
   leadId: string;
   message: string;
   resolved: boolean;
+  response: string | null;
+  respondedAt: string | null;
   createdAt: string;
 };
 
@@ -701,6 +706,8 @@ function toSupportRequest(row: any): SupportRequest {
     leadId: row.lead_id,
     message: row.message,
     resolved: row.resolved,
+    response: row.response ?? null,
+    respondedAt: row.responded_at ?? null,
     createdAt: row.created_at,
   };
 }
@@ -714,7 +721,19 @@ export async function createSupportRequest(leadId: string, message: string): Pro
     INSERT INTO support_requests (id, lead_id, message, resolved, created_at)
     VALUES (${id}, ${leadId}, ${message}, FALSE, ${createdAt})
   `;
-  return { id, leadId, message, resolved: false, createdAt };
+  return { id, leadId, message, resolved: false, response: null, respondedAt: null, createdAt };
+}
+
+// Manix's in-app reply — the client will see this on their own report page
+// next time they check it, no email needed either way.
+export async function respondToSupportRequest(id: string, response: string): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`
+    UPDATE support_requests
+    SET response = ${response}, responded_at = ${new Date().toISOString()}, resolved = TRUE
+    WHERE id = ${id}
+  `;
 }
 
 export async function listSupportRequestsByLead(leadId: string): Promise<SupportRequest[]> {

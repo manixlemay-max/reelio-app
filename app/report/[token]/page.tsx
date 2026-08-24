@@ -1,4 +1,4 @@
-import { getLeadByToken, getClientReport } from "@/lib/db";
+import { getLeadByToken, getClientReport, listSupportRequestsByLead } from "@/lib/db";
 import { notFound } from "next/navigation";
 import CancelSubscription from "@/components/CancelSubscription";
 import NeedHelp from "@/components/NeedHelp";
@@ -11,6 +11,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
   if (!lead) return notFound();
 
   const { videos, posts, analytics } = await getClientReport(lead.id);
+  const messages = await listSupportRequestsByLead(lead.id);
 
   const totalViews = analytics.reduce((sum, a) => sum + a.views, 0);
   const totalLikes = analytics.reduce((sum, a) => sum + a.likes, 0);
@@ -71,6 +72,32 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
             </li>
           ))}
         </ul>
+      )}
+
+      {messages.length > 0 && (
+        <>
+          <h2 className="text-lg font-medium mb-4 mt-12">Messages</h2>
+          <ul className="space-y-3">
+            {messages.map((m) => (
+              <li key={m.id} className="rounded-lg border border-neutral-800 p-3">
+                <p className="text-xs text-neutral-500 mb-1">
+                  You &middot; {new Date(m.createdAt).toLocaleString()}
+                </p>
+                <p className="text-sm text-neutral-300 mb-2">{m.message}</p>
+                {m.response ? (
+                  <div className="pt-2 border-t border-neutral-800">
+                    <p className="text-xs text-blue-400 mb-1">
+                      Reelio &middot; {m.respondedAt ? new Date(m.respondedAt).toLocaleString() : ""}
+                    </p>
+                    <p className="text-sm text-neutral-300">{m.response}</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-neutral-600">Waiting on a reply...</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
       <div className="mt-12 pt-6 border-t border-neutral-800 flex flex-wrap items-start gap-3">

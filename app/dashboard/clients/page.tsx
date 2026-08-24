@@ -1,5 +1,6 @@
 import { listLeads, listSubscriptions, ensureLeadReportToken, listProducts, listAllSupportRequests } from "@/lib/db";
 import LeadIntegrations from "@/components/LeadIntegrations";
+import SupportRequestItem from "@/components/SupportRequestItem";
 import { headers } from "next/headers";
 import Link from "next/link";
 
@@ -121,11 +122,15 @@ export default async function ClientsPage() {
                     <p className="text-xs text-neutral-500 mb-1.5">Help requests</p>
                     <ul className="space-y-1.5">
                       {(supportByLead.get(lead.id) ?? []).map((r) => (
-                        <li key={r.id} className="text-xs text-neutral-400 rounded-lg bg-neutral-900/60 px-2.5 py-2">
-                          <span className="text-neutral-600">{new Date(r.createdAt).toLocaleString()}</span>
-                          {r.resolved && <span className="text-green-500 ml-2">Resolved</span>}
-                          <p className="mt-0.5">{r.message}</p>
-                        </li>
+                        <SupportRequestItem
+                          key={r.id}
+                          id={r.id}
+                          message={r.message}
+                          createdAt={r.createdAt}
+                          resolved={r.resolved}
+                          response={r.response}
+                          respondedAt={r.respondedAt}
+                        />
                       ))}
                     </ul>
                   </div>
