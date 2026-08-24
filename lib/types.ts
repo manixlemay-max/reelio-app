@@ -47,8 +47,11 @@ export type Tier = {
   id: "starter" | "growth" | "pro";
   name: string;
   priceUsd: number;
+  // Per-month equivalent when billed annually (20% off), shown in the UI.
+  yearlyPriceUsd: number;
   networksAllowed: number;
   videosPerMonth: number;
   competitorAnalysis: boolean;
   stripePriceEnvVar: string;
+  stripePriceEnvVarYearly: string;
 };

@@ -17,10 +17,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Palier inconnu" }, { status: 400 });
   }
 
-  const priceId = process.env[tier.stripePriceEnvVar];
+  const yearly = body.billingPeriod === "yearly";
+  const priceEnvVar = yearly ? tier.stripePriceEnvVarYearly : tier.stripePriceEnvVar;
+  const priceId = process.env[priceEnvVar];
   if (!priceId) {
     return NextResponse.json(
-      { error: `${tier.stripePriceEnvVar} manquant — crée ce prix dans ton dashboard Stripe et colle son ID dans .env.local` },
+      { error: `${priceEnvVar} manquant — crée ce prix dans ton dashboard Stripe et colle son ID dans .env.local` },
       { status: 500 }
     );
   }
