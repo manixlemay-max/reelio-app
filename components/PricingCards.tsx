@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ShieldCheck } from "lucide-react";
 import { TIERS } from "@/lib/pricing";
 
 export default function PricingCards({ highlightTierId = "starter" }: { highlightTierId?: string }) {
@@ -77,6 +78,10 @@ export default function PricingCards({ highlightTierId = "starter" }: { highligh
           );
         })}
       </div>
+      <p className="flex items-center justify-center gap-1.5 text-xs text-neutral-500 mt-6">
+        <ShieldCheck size={14} className="text-neutral-600" />
+        Secure payment via Stripe &middot; Cancel anytime, no long-term commitment
+      </p>
     </div>
   );
 }
