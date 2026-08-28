@@ -15,8 +15,19 @@ const PLATFORM_COLOR: Record<string, string> = {
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
+function startOfWeek(d: Date) {
+  const s = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  s.setDate(s.getDate() - s.getDay());
+  return s;
+}
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+function formatHour(h: number) {
+  if (h === 0) return "12am";
+  if (h === 12) return "12pm";
+  return h < 12 ? `${h}am` : `${h - 12}pm`;
 }
 
 export default function SchedulePage() {
@@ -29,7 +40,9 @@ export default function SchedulePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [view, setView] = useState<"month" | "week">("month");
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
+  const [week, setWeek] = useState(() => startOfWeek(new Date()));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -88,6 +101,12 @@ export default function SchedulePage() {
     }
   }
 
+  function openFormAt(day: Date, hour: number) {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setScheduledAt(`${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T${pad(hour)}:00`);
+    setShowForm(true);
+  }
+
   async function removePost(id: string) {
     if (!confirm("Remove this scheduled post?")) return;
     setBusyId(id);
@@ -132,6 +151,25 @@ export default function SchedulePage() {
     const map = new Map<string, Post[]>();
     for (const p of posts) {
       const key = new Date(p.scheduledAt).toDateString();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    return map;
+  }, [posts]);
+
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(week);
+      d.setDate(week.getDate() + i);
+      return d;
+    });
+  }, [week]);
+
+  const postsByDayHour = useMemo(() => {
+    const map = new Map<string, Post[]>();
+    for (const p of posts) {
+      const d = new Date(p.scheduledAt);
+      const key = `${d.toDateString()}-${d.getHours()}`;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(p);
     }
@@ -221,65 +259,164 @@ export default function SchedulePage() {
         </form>
       )}
 
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-medium text-neutral-300">{monthLabel}</p>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
-            className="rounded-md p-1.5 hover:bg-neutral-900 transition"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            onClick={() => setMonth(startOfMonth(new Date()))}
-            className="text-xs text-neutral-400 hover:text-neutral-200 px-2"
-          >
-            Today
-          </button>
-          <button
-            onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
-            className="rounded-md p-1.5 hover:bg-neutral-900 transition"
-          >
-            <ChevronRight size={16} />
-          </button>
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-medium text-neutral-300">
+            {view === "month"
+              ? monthLabel
+              : `${weekDays[0].toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${weekDays[6].toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() =>
+                view === "month"
+                  ? setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))
+                  : setWeek((w) => {
+                      const n = new Date(w);
+                      n.setDate(n.getDate() - 7);
+                      return n;
+                    })
+              }
+              className="rounded-md p-1.5 hover:bg-neutral-900 transition"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => {
+                setMonth(startOfMonth(new Date()));
+                setWeek(startOfWeek(new Date()));
+              }}
+              className="text-xs text-neutral-400 hover:text-neutral-200 px-2"
+            >
+              Today
+            </button>
+            <button
+              onClick={() =>
+                view === "month"
+                  ? setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))
+                  : setWeek((w) => {
+                      const n = new Date(w);
+                      n.setDate(n.getDate() + 7);
+                      return n;
+                    })
+              }
+              className="rounded-md p-1.5 hover:bg-neutral-900 transition"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            {(["tiktok", "instagram", "youtube"] as const).map((p) => (
+              <span key={p} className="flex items-center gap-1.5 text-xs text-neutral-500 capitalize">
+                <span className={`w-1.5 h-1.5 rounded-full ${PLATFORM_COLOR[p]}`} />
+                {p}
+              </span>
+            ))}
+          </div>
+          <div className="flex rounded-lg border border-neutral-800 overflow-hidden text-xs">
+            {(["week", "month"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-3 py-1.5 capitalize transition ${
+                  view === v ? "bg-blue-600 text-white" : "text-neutral-500 hover:bg-neutral-900"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 text-center text-xs text-neutral-500 mb-1">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <div key={d} className="py-1">
-            {d}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1 mb-10">
-        {days.map((d) => {
-          const dayPosts = postsByDay.get(d.toDateString()) ?? [];
-          const inMonth = d.getMonth() === month.getMonth();
-          const isToday = sameDay(d, today);
-          return (
-            <div
-              key={d.toISOString()}
-              className={`min-h-[5.5rem] rounded-lg border p-1.5 ${
-                inMonth ? "border-neutral-800" : "border-neutral-900"
-              } ${isToday ? "bg-blue-500/10 border-blue-500/40" : ""}`}
-            >
-              <p className={`text-xs mb-1 ${inMonth ? "text-neutral-400" : "text-neutral-700"}`}>{d.getDate()}</p>
-              <div className="space-y-1">
-                {dayPosts.slice(0, 3).map((p) => (
-                  <div key={p.id} className="flex items-center gap-1 text-[10px] text-neutral-300 truncate">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PLATFORM_COLOR[p.platform] ?? "bg-neutral-500"}`} />
-                    <span className="truncate">{p.productName}</span>
-                  </div>
-                ))}
-                {dayPosts.length > 3 && (
-                  <p className="text-[10px] text-neutral-600">+{dayPosts.length - 3} more</p>
-                )}
+      {view === "month" ? (
+        <>
+          <div className="grid grid-cols-7 text-center text-xs text-neutral-500 mb-1">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+              <div key={d} className="py-1">
+                {d}
               </div>
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1 mb-10">
+            {days.map((d) => {
+              const dayPosts = postsByDay.get(d.toDateString()) ?? [];
+              const inMonth = d.getMonth() === month.getMonth();
+              const isToday = sameDay(d, today);
+              return (
+                <div
+                  key={d.toISOString()}
+                  onClick={() => openFormAt(d, 12)}
+                  className={`min-h-[5.5rem] rounded-lg border p-1.5 cursor-pointer transition hover:border-neutral-700 ${
+                    inMonth ? "border-neutral-800" : "border-neutral-900"
+                  } ${isToday ? "bg-blue-500/10 border-blue-500/40" : ""}`}
+                >
+                  <p className={`text-xs mb-1 ${inMonth ? "text-neutral-400" : "text-neutral-700"}`}>{d.getDate()}</p>
+                  <div className="space-y-1">
+                    {dayPosts.slice(0, 3).map((p) => (
+                      <div key={p.id} className="flex items-center gap-1 text-[10px] text-neutral-300 truncate">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${PLATFORM_COLOR[p.platform] ?? "bg-neutral-500"}`} />
+                        <span className="truncate">{p.productName}</span>
+                      </div>
+                    ))}
+                    {dayPosts.length > 3 && (
+                      <p className="text-[10px] text-neutral-600">+{dayPosts.length - 3} more</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="mb-10 rounded-xl border border-neutral-800 overflow-hidden">
+          <div className="grid grid-cols-[3.5rem_repeat(7,1fr)] border-b border-neutral-800">
+            <div />
+            {weekDays.map((d) => (
+              <div
+                key={d.toISOString()}
+                className={`text-center py-2 border-l border-neutral-800 ${sameDay(d, today) ? "bg-blue-500/10" : ""}`}
+              >
+                <p className="text-[10px] text-neutral-500">{d.toLocaleDateString("en-US", { weekday: "short" })}</p>
+                <p className={`text-sm ${sameDay(d, today) ? "text-blue-400 font-medium" : "text-neutral-300"}`}>
+                  {d.getDate()}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="max-h-[32rem] overflow-y-auto">
+            {HOURS.map((h) => (
+              <div key={h} className="grid grid-cols-[3.5rem_repeat(7,1fr)] border-b border-neutral-900">
+                <div className="text-[10px] text-neutral-600 text-right pr-2 py-2">{formatHour(h)}</div>
+                {weekDays.map((d) => {
+                  const cellPosts = postsByDayHour.get(`${d.toDateString()}-${h}`) ?? [];
+                  return (
+                    <div
+                      key={d.toISOString()}
+                      onClick={() => openFormAt(d, h)}
+                      className="border-l border-neutral-900 min-h-[2rem] p-0.5 cursor-pointer hover:bg-neutral-900/60 transition"
+                    >
+                      {cellPosts.map((p) => (
+                        <div
+                          key={p.id}
+                          className={`flex items-center gap-1 rounded px-1 py-0.5 mb-0.5 text-[10px] text-white truncate ${
+                            PLATFORM_COLOR[p.platform] ?? "bg-neutral-600"
+                          }`}
+                        >
+                          <span className="truncate">{p.productName}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <h2 className="text-sm font-medium text-neutral-500 mb-3">All scheduled posts</h2>
       <ul className="space-y-2">
