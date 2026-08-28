@@ -72,6 +72,10 @@ export async function GET(req: NextRequest) {
         productName: product.name,
         productDescription: product.description,
         imageUrl: product.imageUrl,
+        // Use the client's chosen AI presenter for consistent branding once
+        // they've picked one; falls back to auto-pick until they do.
+        avatarId: lead.avatarId,
+        voiceId: lead.voiceId,
       });
       await createVideo({
         productId: product.id,

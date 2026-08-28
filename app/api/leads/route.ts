@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createLead, listLeads, createProduct, createVideo } from "@/lib/db";
+import { createLead, listLeads, createProduct, createVideo, ensureLeadReportToken } from "@/lib/db";
 import { generateVideo } from "@/lib/videoProvider";
 
 export async function POST(req: NextRequest) {
@@ -51,7 +51,9 @@ export async function POST(req: NextRequest) {
     console.error("Auto product/video creation failed for lead", lead.id, err);
   }
 
-  return NextResponse.json({ lead }, { status: 201 });
+  const reportToken = await ensureLeadReportToken(lead.id);
+
+  return NextResponse.json({ lead, reportToken }, { status: 201 });
 }
 
 export async function GET() {

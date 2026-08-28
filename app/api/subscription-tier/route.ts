@@ -15,8 +15,13 @@ export async function GET(req: NextRequest) {
     // No matching subscription found yet (e.g. webhook hasn't landed, or
     // testing without Stripe configured) — fall back to the most generous
     // limit so we never block a real paying customer.
-    return NextResponse.json({ networksAllowed: 3, tierName: null, found: false });
+    return NextResponse.json({ networksAllowed: 3, avatarChangesAllowed: 3, tierName: null, found: false });
   }
 
-  return NextResponse.json({ networksAllowed: tier.networksAllowed, tierName: tier.name, found: true });
+  return NextResponse.json({
+    networksAllowed: tier.networksAllowed,
+    avatarChangesAllowed: tier.avatarChangesAllowed,
+    tierName: tier.name,
+    found: true,
+  });
 }

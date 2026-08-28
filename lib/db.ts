@@ -99,6 +99,11 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS youtube_integration_id TEXT`;
       // Unguessable token used for the client's public, login-free report page.
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS report_token TEXT`;
+      // The AI avatar this client picked for all their videos, plus how many
+      // times they've swapped it — limited per plan (see Tier.avatarChangesAllowed).
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS avatar_id TEXT`;
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS voice_id TEXT`;
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS avatar_changes_used INTEGER NOT NULL DEFAULT 0`;
       // Self-serve cancellation: whether the client already asked to cancel
       // (access continues until the period ends), and why they left.
       await sql`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT FALSE`;
@@ -438,6 +443,9 @@ export type Lead = {
   instagramIntegrationId: string | null;
   youtubeIntegrationId: string | null;
   reportToken: string | null;
+  avatarId: string | null;
+  voiceId: string | null;
+  avatarChangesUsed: number;
   createdAt: string;
 };
 
@@ -455,6 +463,9 @@ function toLead(row: any): Lead {
     instagramIntegrationId: row.instagram_integration_id ?? null,
     youtubeIntegrationId: row.youtube_integration_id ?? null,
     reportToken: row.report_token ?? null,
+    avatarId: row.avatar_id ?? null,
+    voiceId: row.voice_id ?? null,
+    avatarChangesUsed: row.avatar_changes_used ?? 0,
     createdAt: row.created_at,
   };
 }
@@ -487,6 +498,9 @@ export async function createLead(input: {
     instagramIntegrationId: null,
     youtubeIntegrationId: null,
     reportToken: null,
+    avatarId: null,
+    voiceId: null,
+    avatarChangesUsed: 0,
     createdAt,
   };
 }
@@ -595,6 +609,28 @@ export async function updateLeadIntegrations(
     WHERE id = ${id}
   `;
   return { ...existing, tiktokIntegrationId: tiktok, instagramIntegrationId: instagram, youtubeIntegrationId: youtube };
+}
+
+// Sets (or changes) the client's chosen AI avatar. Pass incrementChangeCount
+// = true only when this is an actual change (not their first pick) — the
+// caller is responsible for checking the plan's change limit first.
+export async function updateLeadAvatar(
+  id: string,
+  avatarId: string,
+  voiceId: string | null,
+  incrementChangeCount: boolean
+): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  if (incrementChangeCount) {
+    await sql`
+      UPDATE leads
+      SET avatar_id = ${avatarId}, voice_id = ${voiceId}, avatar_changes_used = avatar_changes_used + 1
+      WHERE id = ${id}
+    `;
+  } else {
+    await sql`UPDATE leads SET avatar_id = ${avatarId}, voice_id = ${voiceId} WHERE id = ${id}`;
+  }
 }
 
 

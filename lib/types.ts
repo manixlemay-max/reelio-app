@@ -54,6 +54,9 @@ export type Tier = {
   yearlyTotalUsd: number;
   networksAllowed: number;
   videosPerMonth: number;
+  // How many times a client can swap their chosen AI avatar (their first
+  // pick is free and doesn't count against this).
+  avatarChangesAllowed: number;
   competitorAnalysis: boolean;
   stripePriceEnvVar: string;
   stripePriceEnvVarYearly: string;

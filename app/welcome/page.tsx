@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import AvatarPicker from "@/components/AvatarPicker";
 
 function WelcomeForm() {
   const params = useSearchParams();
@@ -21,8 +22,10 @@ function WelcomeForm() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
   const [networksAllowed, setNetworksAllowed] = useState(3);
+  const [avatarChangesAllowed, setAvatarChangesAllowed] = useState(3);
   const [tierName, setTierName] = useState<string | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [reportToken, setReportToken] = useState<string | null>(null);
 
   function update(field: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -42,12 +45,15 @@ function WelcomeForm() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Something went wrong. Please try again.");
       }
+      const data = await res.json();
+      setReportToken(data.reportToken ?? null);
       setSubmitted(true);
       fetch(`/api/subscription-tier?email=${encodeURIComponent(form.email)}`)
         .then((r) => r.json())
-        .then((data) => {
-          setNetworksAllowed(data.networksAllowed ?? 3);
-          setTierName(data.tierName ?? null);
+        .then((tierData) => {
+          setNetworksAllowed(tierData.networksAllowed ?? 3);
+          setAvatarChangesAllowed(tierData.avatarChangesAllowed ?? 3);
+          setTierName(tierData.tierName ?? null);
         })
         .catch(() => {});
     } catch (err) {
@@ -122,6 +128,17 @@ function WelcomeForm() {
             </li>
           ))}
         </ol>
+
+        {reportToken && (
+          <div className="mt-10 pt-8 border-t border-neutral-800">
+            <h2 className="font-medium text-sm mb-1">Choose your video presenter</h2>
+            <p className="text-xs text-neutral-500 mb-4">
+              Pick the AI avatar that will present your products — it'll stay consistent across
+              your videos. You can also do this later from your report link.
+            </p>
+            <AvatarPicker token={reportToken} changesUsed={0} changesAllowed={avatarChangesAllowed} />
+          </div>
+        )}
 
         <div className="mt-10 pt-8 border-t border-neutral-800">
           <h2 className="font-medium text-sm mb-1">Connect your accounts</h2>

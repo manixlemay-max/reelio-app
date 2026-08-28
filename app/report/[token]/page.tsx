@@ -1,7 +1,10 @@
-import { getLeadByToken, getClientReport, listSupportRequestsByLead } from "@/lib/db";
+import { getLeadByToken, getClientReport, listSupportRequestsByLead, getSubscriptionByEmail } from "@/lib/db";
 import { notFound } from "next/navigation";
 import CancelSubscription from "@/components/CancelSubscription";
 import NeedHelp from "@/components/NeedHelp";
+import AvatarPicker from "@/components/AvatarPicker";
+import { listAvatars } from "@/lib/videoProvider";
+import { TIERS } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +15,14 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
 
   const { videos, posts, analytics } = await getClientReport(lead.id);
   const messages = await listSupportRequestsByLead(lead.id);
+
+  const sub = await getSubscriptionByEmail(lead.email);
+  const tier = TIERS.find((t) => t.id === sub?.tierId) ?? TIERS[TIERS.length - 1];
+  let currentAvatarName: string | null = null;
+  if (lead.avatarId) {
+    const avatars = await listAvatars();
+    currentAvatarName = avatars?.find((a) => a.id === lead.avatarId)?.name ?? null;
+  }
 
   const totalViews = analytics.reduce((sum, a) => sum + a.views, 0);
   const totalLikes = analytics.reduce((sum, a) => sum + a.likes, 0);
@@ -100,7 +111,17 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
         </>
       )}
 
-      <div className="mt-12 pt-6 border-t border-neutral-800 flex flex-wrap items-start gap-3">
+      <div className="mt-12 pt-6 border-t border-neutral-800">
+        <AvatarPicker
+          token={token}
+          currentAvatarId={lead.avatarId}
+          currentAvatarName={currentAvatarName}
+          changesUsed={lead.avatarChangesUsed}
+          changesAllowed={tier.avatarChangesAllowed}
+        />
+      </div>
+
+      <div className="mt-6 pt-6 border-t border-neutral-800 flex flex-wrap items-start gap-3">
         <NeedHelp token={token} />
         <span className="text-neutral-700">&middot;</span>
         <CancelSubscription token={token} />
