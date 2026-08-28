@@ -367,6 +367,26 @@ export async function hasPostForVideoPlatform(videoId: string, platform: Platfor
   return rows.length > 0;
 }
 
+// Lightweight analytics slice for one client — just what
+// suggestBestPostingTime() needs (platform, capturedAt, views) — used by the
+// auto-posting cron to time posts based on that client's own history.
+export async function getAnalyticsForLead(
+  leadId: string
+): Promise<{ platform: Platform; capturedAt: string; views: number }[]> {
+  const sql = getSql();
+  await ensureSchema();
+  const rows = await sql`
+    SELECT analytics.views as views, analytics.captured_at as captured_at, posts.platform as platform
+    FROM analytics
+    JOIN posts ON posts.id = analytics.post_id
+    JOIN videos ON videos.id = posts.video_id
+    JOIN products ON products.id = videos.product_id
+    WHERE products.lead_id = ${leadId}
+  `;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return rows.map((r: any) => ({ platform: r.platform, capturedAt: r.captured_at, views: r.views }));
+}
+
 export async function updatePostSchedule(id: string, scheduledAt: string): Promise<void> {
   const sql = getSql();
   await ensureSchema();
