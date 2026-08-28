@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, X, Trash2, Pencil } from "lucide-react";
 
-type Video = { id: string; productName: string; status: string; videoUrl: string | null };
+type Video = { id: string; productId: string; productName: string; status: string; videoUrl: string | null };
 type Post = { id: string; platform: string; hashtags: string; scheduledAt: string; status: string; productName: string };
 
 const PLATFORM_COLOR: Record<string, string> = {
@@ -33,6 +33,7 @@ export default function SchedulePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
 
   async function refresh() {
     const [videosRes, postsRes] = await Promise.all([
@@ -70,6 +71,21 @@ export default function SchedulePage() {
       setShowForm(false);
     }
     refresh();
+  }
+
+  async function suggestCaption() {
+    const video = videos.find((v) => v.id === videoId);
+    if (!video) return;
+    setSuggesting(true);
+    try {
+      const res = await fetch(`/api/products/${video.productId}/caption-suggestion`);
+      const data = await res.json();
+      if (data.caption) setHashtags(data.caption);
+    } catch {
+      // silently ignore — the field is still editable manually
+    } finally {
+      setSuggesting(false);
+    }
   }
 
   async function removePost(id: string) {
@@ -167,12 +183,23 @@ export default function SchedulePage() {
             <option value="youtube">YouTube</option>
           </select>
 
-          <input
-            value={hashtags}
-            onChange={(e) => setHashtags(e.target.value)}
-            placeholder="#ecommerce #ugc #myproduct"
-            className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm"
-          />
+          <div>
+            <textarea
+              value={hashtags}
+              onChange={(e) => setHashtags(e.target.value)}
+              placeholder="#ecommerce #ugc #myproduct"
+              rows={3}
+              className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 placeholder-neutral-500 px-3 py-2 text-sm mb-1.5"
+            />
+            <button
+              type="button"
+              onClick={suggestCaption}
+              disabled={suggesting || !videoId}
+              className="text-xs text-blue-400 hover:underline disabled:opacity-50"
+            >
+              {suggesting ? "Thinking..." : "Suggest a caption + hashtags"}
+            </button>
+          </div>
 
           <input
             type="datetime-local"

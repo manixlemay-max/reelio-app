@@ -11,6 +11,7 @@ import {
   getAnalyticsForLead,
 } from "@/lib/db";
 import type { Platform } from "@/lib/types";
+import { buildSmartCaption } from "@/lib/caption";
 
 // Used when a client has no posting history yet to learn from — a generally
 // solid UGC engagement window. Replaced by their own data once they have some.
@@ -42,10 +43,7 @@ function authorized(req: NextRequest): boolean {
   return req.headers.get("authorization") === `Bearer ${secret}`;
 }
 
-function buildCaption(productName: string, productDescription: string): string {
-  const desc = productDescription.trim().slice(0, 200);
-  return `${productName} ✨ ${desc}\n\n#ugc #ai`.slice(0, 500);
-}
+
 
 export async function GET(req: NextRequest) {
   if (!authorized(req)) {
@@ -86,7 +84,7 @@ export async function GET(req: NextRequest) {
       { platform: "youtube", integrationId: lead.youtubeIntegrationId },
     ];
 
-    const hashtags = buildCaption(product.name, product.description);
+    const hashtags = buildSmartCaption(product.name, product.description);
 
     // Data-driven timing: use this client's own best-performing hour per
     // platform once we have enough history, otherwise a sensible default —
