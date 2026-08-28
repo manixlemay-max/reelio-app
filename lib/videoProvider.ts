@@ -24,6 +24,9 @@ type GenerateVideoInput = {
   // avatar flow instead of letting HeyGen's Video Agent auto-pick one.
   avatarId?: string | null;
   voiceId?: string | null;
+  // Optional client-provided notes on what to mention/emphasize (a promo
+  // code, a specific feature, a call to action) — folded into the script.
+  styleNotes?: string | null;
 };
 
 type GenerateVideoResult = {
@@ -61,7 +64,8 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
 
   // --- Explicit avatar chosen in the dashboard ---
   if (input.avatarId) {
-    const script = `Hey! I have to tell you about ${input.productName}. ${input.productDescription} Honestly, it's been such a game changer for me — you have to try it for yourself. Grab yours today!`;
+    const notesLine = input.styleNotes?.trim() ? ` ${input.styleNotes.trim()}` : "";
+    const script = `Hey! I have to tell you about ${input.productName}. ${input.productDescription}${notesLine} Honestly, it's been such a game changer for me — you have to try it for yourself. Grab yours today!`;
 
     const res = await fetch(`${HEYGEN_BASE}/v3/videos`, {
       method: "POST",
@@ -74,6 +78,11 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
         resolution: "1080p",
         aspect_ratio: "9:16",
         title: `${input.productName} — Reelio UGC video`,
+        // Bold on-screen captions burned into the video, like typical viral
+        // UGC content. NOTE: verify this renders as expected once live —
+        // HeyGen's docs are inconsistent about whether v3/videos burns
+        // captions in or only returns a sidecar subtitle file.
+        caption: { file_format: "srt", style: "default" },
       }),
     });
 
@@ -91,10 +100,12 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
   }
 
   // --- Default: Video Agent picks the avatar/voice/scene automatically ---
+  const notesSentence = input.styleNotes?.trim() ? ` Make sure to mention: ${input.styleNotes.trim()}.` : "";
   const prompt = `A short, energetic UGC-style product video (under 30 seconds) for an
 e-commerce product called "${input.productName}". Product description: ${input.productDescription}.
 The video should feel like an authentic social media video promoting this product, with an
-enthusiastic presenter highlighting what makes it worth buying.`;
+enthusiastic presenter highlighting what makes it worth buying. Add bold, punchy on-screen text
+captions/callouts throughout, like typical viral UGC videos on TikTok and Instagram.${notesSentence}`;
 
   const res = await fetch(`${HEYGEN_BASE}/v3/video-agents`, {
     method: "POST",

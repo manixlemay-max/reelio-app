@@ -104,6 +104,9 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS avatar_id TEXT`;
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS voice_id TEXT`;
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS avatar_changes_used INTEGER NOT NULL DEFAULT 0`;
+      // Free-text notes from the client on what to mention/emphasize in
+      // their videos (a promo code, a feature, a call to action).
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS video_notes TEXT`;
       // Self-serve cancellation: whether the client already asked to cancel
       // (access continues until the period ends), and why they left.
       await sql`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT FALSE`;
@@ -466,6 +469,7 @@ export type Lead = {
   avatarId: string | null;
   voiceId: string | null;
   avatarChangesUsed: number;
+  videoNotes: string | null;
   createdAt: string;
 };
 
@@ -486,6 +490,7 @@ function toLead(row: any): Lead {
     avatarId: row.avatar_id ?? null,
     voiceId: row.voice_id ?? null,
     avatarChangesUsed: row.avatar_changes_used ?? 0,
+    videoNotes: row.video_notes ?? null,
     createdAt: row.created_at,
   };
 }
@@ -521,6 +526,7 @@ export async function createLead(input: {
     avatarId: null,
     voiceId: null,
     avatarChangesUsed: 0,
+    videoNotes: null,
     createdAt,
   };
 }
@@ -651,6 +657,12 @@ export async function updateLeadAvatar(
   } else {
     await sql`UPDATE leads SET avatar_id = ${avatarId}, voice_id = ${voiceId} WHERE id = ${id}`;
   }
+}
+
+export async function updateLeadVideoNotes(id: string, notes: string): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`UPDATE leads SET video_notes = ${notes} WHERE id = ${id}`;
 }
 
 

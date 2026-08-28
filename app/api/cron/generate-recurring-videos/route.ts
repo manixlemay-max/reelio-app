@@ -76,6 +76,7 @@ export async function GET(req: NextRequest) {
         // they've picked one; falls back to auto-pick until they do.
         avatarId: lead.avatarId,
         voiceId: lead.voiceId,
+        styleNotes: lead.videoNotes,
       });
       await createVideo({
         productId: product.id,

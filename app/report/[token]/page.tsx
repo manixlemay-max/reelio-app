@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import CancelSubscription from "@/components/CancelSubscription";
 import NeedHelp from "@/components/NeedHelp";
 import AvatarPicker from "@/components/AvatarPicker";
+import VideoNotes from "@/components/VideoNotes";
 import { listAvatars } from "@/lib/videoProvider";
 import { TIERS } from "@/lib/pricing";
 
@@ -111,7 +112,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
         </>
       )}
 
-      <div className="mt-12 pt-6 border-t border-neutral-800">
+      <div className="mt-12 pt-6 border-t border-neutral-800 space-y-4">
         <AvatarPicker
           token={token}
           currentAvatarId={lead.avatarId}
@@ -119,6 +120,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
           changesUsed={lead.avatarChangesUsed}
           changesAllowed={tier.avatarChangesAllowed}
         />
+        <VideoNotes token={token} initialNotes={lead.videoNotes} />
       </div>
 
       <div className="mt-6 pt-6 border-t border-neutral-800 flex flex-wrap items-start gap-3">
