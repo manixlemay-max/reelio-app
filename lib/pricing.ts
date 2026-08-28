@@ -8,8 +8,8 @@ export const TIERS: Tier[] = [
   {
     id: "starter",
     name: "Starter",
-    priceUsd: 19,
-    yearlyPriceUsd: 15,
+    priceUsd: 29,
+    yearlyPriceUsd: 23,
     networksAllowed: 1,
     videosPerMonth: 8,
     competitorAnalysis: false,
@@ -19,8 +19,8 @@ export const TIERS: Tier[] = [
   {
     id: "growth",
     name: "Growth",
-    priceUsd: 49,
-    yearlyPriceUsd: 39,
+    priceUsd: 59,
+    yearlyPriceUsd: 47,
     networksAllowed: 2,
     videosPerMonth: 20,
     competitorAnalysis: false,
