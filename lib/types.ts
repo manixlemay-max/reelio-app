@@ -49,6 +49,9 @@ export type Tier = {
   priceUsd: number;
   // Per-month equivalent when billed annually (20% off), shown in the UI.
   yearlyPriceUsd: number;
+  // The exact annual total charged (yearlyPriceUsd * 12 would drift due to
+  // rounding) — this is the real 20%-off number, e.g. 29*12*0.8 rounded.
+  yearlyTotalUsd: number;
   networksAllowed: number;
   videosPerMonth: number;
   competitorAnalysis: boolean;

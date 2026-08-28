@@ -85,7 +85,7 @@ export default function PricingCards({ highlightTierId = "starter" }: { highligh
                 <span className="text-sm text-neutral-500 font-normal">/mo</span>
               </p>
               <p className="text-xs text-neutral-500 mb-4 h-4">
-                {billing === "yearly" ? `Billed annually ($${price * 12}/yr)` : " "}
+                {billing === "yearly" ? `Billed annually ($${tier.yearlyTotalUsd}/yr)` : " "}
               </p>
               <ul className="text-sm text-neutral-500 space-y-2 flex-1 mb-6">
                 <li>{tier.networksAllowed} connected network(s)</li>
