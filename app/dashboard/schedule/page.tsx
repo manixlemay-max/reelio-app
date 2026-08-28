@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, X, Trash2, Pencil, Sparkles, Video as VideoIcon } from "lucide-react";
+import DateTimePicker from "@/components/DateTimePicker";
 
 type Video = { id: string; productId: string; productName: string; status: string; videoUrl: string | null };
 type Post = { id: string; platform: string; hashtags: string; scheduledAt: string; status: string; productName: string };
@@ -269,13 +270,7 @@ export default function SchedulePage() {
               </button>
             </div>
 
-            <input
-              type="datetime-local"
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-              required
-              className="w-full rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-3 py-2 text-sm"
-            />
+            <DateTimePicker value={scheduledAt} onChange={setScheduledAt} placeholder="Pick a date" />
 
             {error && <p className="text-sm text-red-400 whitespace-pre-wrap">{error}</p>}
 
@@ -463,12 +458,9 @@ export default function SchedulePage() {
                 </p>
                 {editingId === p.id ? (
                   <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="datetime-local"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-100 px-2 py-1 text-xs"
-                    />
+                    <div className="w-56">
+                      <DateTimePicker value={editValue} onChange={setEditValue} />
+                    </div>
                     <button
                       onClick={() => saveEdit(p.id)}
                       disabled={busyId === p.id}
