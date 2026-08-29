@@ -29,17 +29,26 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get("origin") ?? "http://localhost:3000";
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/welcome?checkout=success`,
-    cancel_url: `${origin}/pricing?checkout=cancel`,
-    metadata: { tierId: tier.id },
-    subscription_data: { metadata: { tierId: tier.id }, trial_period_days: 7 },
-    // Without this, Stripe hides the promo code field entirely — needed for
-    // testing with 100%-off codes and for any future real discounts.
-    allow_promotion_codes: true,
-  });
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/welcome?checkout=success`,
+      cancel_url: `${origin}/pricing?checkout=cancel`,
+      metadata: { tierId: tier.id },
+      subscription_data: { metadata: { tierId: tier.id }, trial_period_days: 7 },
+      // Without this, Stripe hides the promo code field entirely — needed for
+      // testing with 100%-off codes and for any future real discounts.
+      allow_promotion_codes: true,
+    });
 
-  return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown Stripe error";
+    console.error("Stripe checkout error:", message);
+    return NextResponse.json(
+      { error: `Stripe: ${message} (priceId used: ${priceId})` },
+      { status: 500 }
+    );
+  }
 }
