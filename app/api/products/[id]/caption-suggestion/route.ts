@@ -1,8 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getProduct } from "@/lib/db";
 import { buildSmartCaption } from "@/lib/caption";
+import { isDashboardAuthed } from "@/lib/auth";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await isDashboardAuthed(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const product = await getProduct(id);
   if (!product) {

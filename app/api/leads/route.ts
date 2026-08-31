@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createLead, listLeads, createProduct, createVideo, ensureLeadReportToken } from "@/lib/db";
 import { generateVideo } from "@/lib/videoProvider";
+import { isDashboardAuthed } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -56,7 +57,11 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ lead, reportToken }, { status: 201 });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!(await isDashboardAuthed(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const leads = await listLeads();
   return NextResponse.json({ leads });
 }

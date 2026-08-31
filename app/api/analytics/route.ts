@@ -1,8 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { listAnalytics, listPosts, recordAnalytics } from "@/lib/db";
 import { suggestBestPostingTime } from "@/lib/postingProvider";
+import { isDashboardAuthed } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!(await isDashboardAuthed(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let rows = await listAnalytics();
 
   // Demo mode: if no real data has been collected yet (e.g. the posting

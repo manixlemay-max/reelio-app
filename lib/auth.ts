@@ -15,3 +15,18 @@ export async function expectedAuthValue(): Promise<string | null> {
   if (!password) return null;
   return hashPassword(password);
 }
+
+// Server-side guard for API routes that expose or mutate client data (leads,
+// videos, products, posts, analytics, etc.) and are only ever meant to be
+// called from the password-protected /dashboard pages. Next's middleware
+// only runs on page navigations matched by its `config.matcher`, NOT on API
+// routes hit directly (e.g. curl or fetch from any origin) — so without this,
+// anyone who knows the URL could read every client's name, email and product
+// info from /api/leads with no login at all. Mirrors the same "no password
+// configured -> don't lock out" behavior as middleware.ts for local dev.
+export async function isDashboardAuthed(req: { cookies: { get(name: string): { value: string } | undefined } }): Promise<boolean> {
+  const expected = await expectedAuthValue();
+  if (!expected) return true;
+  const cookie = req.cookies.get(AUTH_COOKIE)?.value;
+  return cookie === expected;
+}

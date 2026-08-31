@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { schedulePost } from "@/lib/postingProvider";
 import { createPost, getVideo, getProduct, getLead } from "@/lib/db";
 import type { Platform } from "@/lib/types";
+import { isDashboardAuthed } from "@/lib/auth";
 
 export const maxDuration = 60;
 
@@ -16,6 +17,10 @@ function integrationIdForPlatform(
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isDashboardAuthed(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const video = await getVideo(body.videoId);
   if (!video || !video.videoUrl) {

@@ -62,55 +62,46 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
     };
   }
 
-  // --- Explicit avatar chosen in the dashboard ---
-  if (input.avatarId) {
-    const notesLine = input.styleNotes?.trim() ? ` ${input.styleNotes.trim()}` : "";
-    const script = `Hey! I have to tell you about ${input.productName}. ${input.productDescription}${notesLine} Honestly, it's been such a game changer for me — you have to try it for yourself. Grab yours today!`;
+  // --- Explicit avatar, chosen by the client or picked as a safe default below ---
+  // NOTE: HeyGen's "Video Agent" auto-pick flow (POST /v3/video-agents) was
+  // tried here originally but proved unreliable in testing — jobs would sit
+  // at progress 0 and flip straight to "failed" with no error detail from the
+  // API, even on a fully-funded account. The explicit-avatar flow below is
+  // the same one HeyGen uses under the hood and has been reliable, so every
+  // video now goes through it — falling back to a randomly-picked public
+  // avatar when the client hasn't chosen one yet (getDefaultAvatar()).
+  let avatarId = input.avatarId ?? null;
+  let voiceId = input.voiceId ?? null;
 
-    const res = await fetch(`${HEYGEN_BASE}/v3/videos`, {
-      method: "POST",
-      headers: heygenHeaders(apiKey, { "Content-Type": "application/json" }),
-      body: JSON.stringify({
-        type: "avatar",
-        avatar_id: input.avatarId,
-        script,
-        voice_id: input.voiceId || undefined,
-        resolution: "1080p",
-        aspect_ratio: "9:16",
-        title: `${input.productName} — Reelio UGC video`,
-        // Bold on-screen captions burned into the video, like typical viral
-        // UGC content. NOTE: verify this renders as expected once live —
-        // HeyGen's docs are inconsistent about whether v3/videos burns
-        // captions in or only returns a sidecar subtitle file.
-        caption: { file_format: "srt", style: "default" },
-      }),
-    });
-
-    if (!res.ok) {
+  if (!avatarId) {
+    const fallback = await getDefaultAvatar(apiKey);
+    if (!fallback) {
       return { status: "failed", videoUrl: null, provider: "heygen" };
     }
-
-    const data = await res.json();
-    const videoId = data?.data?.video_id ?? null;
-    if (!videoId) {
-      return { status: "failed", videoUrl: null, provider: "heygen" };
-    }
-
-    return { status: "pending", videoUrl: null, provider: "heygen", externalJobId: `avatar:${videoId}` };
+    avatarId = fallback.id;
+    voiceId = fallback.defaultVoiceId;
   }
 
-  // --- Default: Video Agent picks the avatar/voice/scene automatically ---
-  const notesSentence = input.styleNotes?.trim() ? ` Make sure to mention: ${input.styleNotes.trim()}.` : "";
-  const prompt = `A short, energetic UGC-style product video (under 30 seconds) for an
-e-commerce product called "${input.productName}". Product description: ${input.productDescription}.
-The video should feel like an authentic social media video promoting this product, with an
-enthusiastic presenter highlighting what makes it worth buying. Add bold, punchy on-screen text
-captions/callouts throughout, like typical viral UGC videos on TikTok and Instagram.${notesSentence}`;
+  const notesLine = input.styleNotes?.trim() ? ` ${input.styleNotes.trim()}` : "";
+  const script = `Hey! I have to tell you about ${input.productName}. ${input.productDescription}${notesLine} Honestly, it's been such a game changer for me — you have to try it for yourself. Grab yours today!`;
 
-  const res = await fetch(`${HEYGEN_BASE}/v3/video-agents`, {
+  const res = await fetch(`${HEYGEN_BASE}/v3/videos`, {
     method: "POST",
     headers: heygenHeaders(apiKey, { "Content-Type": "application/json" }),
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({
+      type: "avatar",
+      avatar_id: avatarId,
+      script,
+      voice_id: voiceId || undefined,
+      resolution: "1080p",
+      aspect_ratio: "9:16",
+      title: `${input.productName} — Reelio UGC video`,
+      // Bold on-screen captions burned into the video, like typical viral
+      // UGC content. NOTE: verify this renders as expected once live —
+      // HeyGen's docs are inconsistent about whether v3/videos burns
+      // captions in or only returns a sidecar subtitle file.
+      caption: { file_format: "srt", style: "default" },
+    }),
   });
 
   if (!res.ok) {
@@ -118,13 +109,34 @@ captions/callouts throughout, like typical viral UGC videos on TikTok and Instag
   }
 
   const data = await res.json();
-  const sessionId = data?.data?.session_id ?? null;
-
-  if (!sessionId) {
+  const videoId = data?.data?.video_id ?? null;
+  if (!videoId) {
     return { status: "failed", videoUrl: null, provider: "heygen" };
   }
 
-  return { status: "pending", videoUrl: null, provider: "heygen", externalJobId: `agent:${sessionId}` };
+  return { status: "pending", videoUrl: null, provider: "heygen", externalJobId: `avatar:${videoId}` };
+}
+
+// Picks one random public avatar to present a video when the client hasn't
+// chosen their own yet (e.g. their very first video, generated at signup
+// before they've seen the avatar picker). A single, cheap page fetch — no
+// need for the full multi-page interleaved list listAvatars() builds for the
+// picker UI.
+async function getDefaultAvatar(apiKey: string): Promise<{ id: string; defaultVoiceId: string | null } | null> {
+  const url = new URL(`${HEYGEN_BASE}/v3/avatars/looks`);
+  url.searchParams.set("ownership", "public");
+  url.searchParams.set("limit", "50");
+
+  const res = await fetch(url.toString(), { headers: heygenHeaders(apiKey) });
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items: any[] = data?.data ?? [];
+  if (items.length === 0) return null;
+
+  const pick = items[Math.floor(Math.random() * items.length)];
+  return { id: pick.id, defaultVoiceId: pick.default_voice_id ?? null };
 }
 
 type ProgressResult = { status: "ready" | "pending" | "failed"; videoUrl: string | null };

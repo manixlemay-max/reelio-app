@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateVideo } from "@/lib/videoProvider";
 import { createVideo, getProduct } from "@/lib/db";
+import { isDashboardAuthed } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  if (!(await isDashboardAuthed(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const product = await getProduct(body.productId);
   if (!product) {
