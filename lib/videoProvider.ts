@@ -95,6 +95,11 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
       voice_id: voiceId || undefined,
       resolution: "1080p",
       aspect_ratio: "9:16",
+      // Ensures the avatar fills the whole vertical frame (no letterboxing)
+      // regardless of the source look's own native orientation — otherwise
+      // HeyGen picks "the best option based on source and canvas
+      // orientations", which can vary avatar to avatar.
+      fit: "cover",
       title: `${input.productName} — Reelio UGC video`,
       // Bold on-screen captions burned into the video, like typical viral
       // UGC content. NOTE: verify this renders as expected once live —
