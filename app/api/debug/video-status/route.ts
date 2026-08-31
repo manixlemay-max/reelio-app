@@ -44,3 +44,37 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(out);
 }
+
+// Temporary: trigger a fresh explicit-avatar generation to compare against
+// the Video Agent flow. Not linked from the UI — for debugging only.
+export async function POST(req: NextRequest) {
+  const apiKey = process.env.VIDEO_PROVIDER_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "VIDEO_PROVIDER_API_KEY not set" }, { status: 500 });
+  }
+  const body = await req.json();
+  const { avatarId, voiceId, productName, productDescription } = body;
+  if (!avatarId || !productName || !productDescription) {
+    return NextResponse.json({ error: "avatarId, productName, productDescription required" }, { status: 400 });
+  }
+
+  const script = `Hey! I have to tell you about ${productName}. ${productDescription} Honestly, it's been such a game changer for me — you have to try it for yourself. Grab yours today!`;
+
+  const res = await fetch(`${HEYGEN_BASE}/v3/videos`, {
+    method: "POST",
+    headers: { "X-Api-Key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "avatar",
+      avatar_id: avatarId,
+      script,
+      voice_id: voiceId || undefined,
+      resolution: "1080p",
+      aspect_ratio: "9:16",
+      title: `${productName} — debug test`,
+      caption: { file_format: "srt", style: "default" },
+    }),
+  });
+
+  const data = await res.json().catch(() => null);
+  return NextResponse.json({ status: res.status, ok: res.ok, data });
+}
