@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Loader2, CheckCircle2, XCircle, Play, Search, PackagePlus } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Play, Search, PackagePlus, Trash2 } from "lucide-react";
 
 type Product = { id: string; name: string };
 type Video = {
@@ -103,6 +103,12 @@ export default function VideosPage() {
       }),
     });
     setGenerating(false);
+    refresh();
+  }
+
+  async function removeVideo(id: string) {
+    if (!confirm("Delete this video? This also removes any posts scheduled from it.")) return;
+    await fetch(`/api/videos/${id}`, { method: "DELETE" });
     refresh();
   }
 
@@ -244,7 +250,16 @@ export default function VideosPage() {
               )}
             </div>
             <div className="p-3">
-              <p className="font-medium text-sm mb-1">{v.productName}</p>
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <p className="font-medium text-sm">{v.productName}</p>
+                <button
+                  onClick={() => removeVideo(v.id)}
+                  title="Delete video"
+                  className="shrink-0 text-neutral-600 hover:text-red-400 transition"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
               <div className="flex items-center gap-1.5 text-xs text-neutral-500">
                 {v.status === "pending" && (
                   <>

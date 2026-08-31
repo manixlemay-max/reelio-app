@@ -311,6 +311,20 @@ export async function getVideo(id: string): Promise<Video | undefined> {
   return rows[0] ? toVideo(rows[0]) : undefined;
 }
 
+// Deletes a video and anything scheduled/posted from it (posts + their
+// analytics), same cascade pattern as deleteProduct above.
+export async function deleteVideo(id: string): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`
+    DELETE FROM analytics WHERE post_id IN (
+      SELECT id FROM posts WHERE video_id = ${id}
+    )
+  `;
+  await sql`DELETE FROM posts WHERE video_id = ${id}`;
+  await sql`DELETE FROM videos WHERE id = ${id}`;
+}
+
 // Most recent video generated for any product belonging to this client —
 // used by the automation cron to pace out recurring monthly videos.
 export async function getLatestVideoForLead(leadId: string): Promise<Video | undefined> {
