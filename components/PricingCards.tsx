@@ -91,6 +91,7 @@ export default function PricingCards({ highlightTierId = "starter" }: { highligh
                 <li>{tier.networksAllowed} connected network(s)</li>
                 <li>{tier.videosPerMonth} videos / month</li>
                 <li>{tier.productsAllowed === null ? "Unlimited products" : `${tier.productsAllowed} product${tier.productsAllowed > 1 ? "s" : ""}`}</li>
+                <li>{tier.avatarChangesAllowed} avatar change{tier.avatarChangesAllowed > 1 ? "s" : ""}</li>
                 <li>Performance analytics + shareable client report</li>
               </ul>
               <button
