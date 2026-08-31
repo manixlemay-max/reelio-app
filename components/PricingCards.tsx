@@ -90,6 +90,7 @@ export default function PricingCards({ highlightTierId = "starter" }: { highligh
               <ul className="text-sm text-neutral-500 space-y-2 flex-1 mb-6">
                 <li>{tier.networksAllowed} connected network(s)</li>
                 <li>{tier.videosPerMonth} videos / month</li>
+                <li>{tier.productsAllowed === null ? "Unlimited products" : `${tier.productsAllowed} product${tier.productsAllowed > 1 ? "s" : ""}`}</li>
                 <li>Performance analytics + shareable client report</li>
               </ul>
               <button
