@@ -77,6 +77,7 @@ export async function GET(req: NextRequest) {
         avatarId: lead.avatarId,
         voiceId: lead.voiceId,
         styleNotes: lead.videoNotes,
+        captionsEnabled: lead.captionsEnabled,
       });
       await createVideo({
         productId: product.id,

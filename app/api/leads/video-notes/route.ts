@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getLeadByToken, updateLeadVideoNotes } from "@/lib/db";
+import { getLeadByToken, updateLeadVideoNotes, updateLeadCaptionsEnabled } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { token, notes } = body as { token?: string; notes?: string };
+  const { token, notes, captionsEnabled } = body as {
+    token?: string;
+    notes?: string;
+    captionsEnabled?: boolean;
+  };
 
   if (!token) {
     return NextResponse.json({ error: "Missing token" }, { status: 400 });
@@ -15,5 +19,8 @@ export async function POST(req: NextRequest) {
   }
 
   await updateLeadVideoNotes(lead.id, (notes ?? "").trim().slice(0, 500));
+  if (typeof captionsEnabled === "boolean") {
+    await updateLeadCaptionsEnabled(lead.id, captionsEnabled);
+  }
   return NextResponse.json({ ok: true });
 }

@@ -107,6 +107,9 @@ function ensureSchema(): Promise<void> {
       // Free-text notes from the client on what to mention/emphasize in
       // their videos (a promo code, a feature, a call to action).
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS video_notes TEXT`;
+      // Client-controlled video style toggle: whether to burn in on-screen
+      // captions. Defaults to on (matches the original always-on behavior).
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS captions_enabled BOOLEAN NOT NULL DEFAULT TRUE`;
       // Self-serve cancellation: whether the client already asked to cancel
       // (access continues until the period ends), and why they left.
       await sql`ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT FALSE`;
@@ -484,6 +487,7 @@ export type Lead = {
   voiceId: string | null;
   avatarChangesUsed: number;
   videoNotes: string | null;
+  captionsEnabled: boolean;
   createdAt: string;
 };
 
@@ -505,6 +509,7 @@ function toLead(row: any): Lead {
     voiceId: row.voice_id ?? null,
     avatarChangesUsed: row.avatar_changes_used ?? 0,
     videoNotes: row.video_notes ?? null,
+    captionsEnabled: row.captions_enabled ?? true,
     createdAt: row.created_at,
   };
 }
@@ -541,6 +546,7 @@ export async function createLead(input: {
     voiceId: null,
     avatarChangesUsed: 0,
     videoNotes: null,
+    captionsEnabled: true,
     createdAt,
   };
 }
@@ -677,6 +683,12 @@ export async function updateLeadVideoNotes(id: string, notes: string): Promise<v
   const sql = getSql();
   await ensureSchema();
   await sql`UPDATE leads SET video_notes = ${notes} WHERE id = ${id}`;
+}
+
+export async function updateLeadCaptionsEnabled(id: string, enabled: boolean): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  await sql`UPDATE leads SET captions_enabled = ${enabled} WHERE id = ${id}`;
 }
 
 

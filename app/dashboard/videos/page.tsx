@@ -31,6 +31,7 @@ export default function VideosPage() {
   const [selectedAvatarId, setSelectedAvatarId] = useState<string>("");
   const [avatarSearch, setAvatarSearch] = useState("");
   const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
+  const [sceneFilter, setSceneFilter] = useState<string>("all");
   const [generating, setGenerating] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -112,8 +113,20 @@ export default function VideosPage() {
     refresh();
   }
 
+  // Avatar look names follow a "<Person> <Scene> <Number>" pattern (e.g.
+  // "Saoirse Livingroom 1", "Kenji Office 10") — lets us filter by setting.
+  function extractScene(name: string): string | null {
+    const match = name.match(/^\S+\s+([A-Za-z]+)\s+\d+$/);
+    return match ? match[1] : null;
+  }
+
+  const scenes = Array.from(
+    new Set(avatars.map((a) => extractScene(a.name ?? "")).filter((s): s is string => !!s))
+  ).sort();
+
   const filteredAvatars = avatars.filter((a) => {
     if (genderFilter !== "all" && a.gender !== genderFilter) return false;
+    if (sceneFilter !== "all" && extractScene(a.name ?? "") !== sceneFilter) return false;
     const name = a.name ?? "";
     if (avatarSearch && !name.toLowerCase().includes(avatarSearch.toLowerCase())) return false;
     return true;
@@ -184,6 +197,20 @@ export default function VideosPage() {
                       className="bg-transparent text-xs text-neutral-100 placeholder-neutral-600 outline-none w-32"
                     />
                   </div>
+                  {scenes.length > 0 && (
+                    <select
+                      value={sceneFilter}
+                      onChange={(e) => setSceneFilter(e.target.value)}
+                      className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 text-xs px-2 py-1.5"
+                    >
+                      <option value="all">Any setting</option>
+                      {scenes.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <div className="flex rounded-lg border border-neutral-800 overflow-hidden text-xs">
                     {(["all", "female", "male"] as const).map((g) => (
                       <button

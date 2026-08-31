@@ -27,6 +27,9 @@ type GenerateVideoInput = {
   // Optional client-provided notes on what to mention/emphasize (a promo
   // code, a specific feature, a call to action) — folded into the script.
   styleNotes?: string | null;
+  // Whether to burn in bold on-screen captions. Defaults to true (matches
+  // the original always-on behavior) when not specified.
+  captionsEnabled?: boolean;
 };
 
 type GenerateVideoResult = {
@@ -102,10 +105,11 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
       fit: "cover",
       title: `${input.productName} — Reelio UGC video`,
       // Bold on-screen captions burned into the video, like typical viral
-      // UGC content. NOTE: verify this renders as expected once live —
-      // HeyGen's docs are inconsistent about whether v3/videos burns
-      // captions in or only returns a sidecar subtitle file.
-      caption: { file_format: "srt", style: "default" },
+      // UGC content — client-controlled (report page toggle). NOTE: verify
+      // this renders as expected once live — HeyGen's docs are inconsistent
+      // about whether v3/videos burns captions in or only returns a sidecar
+      // subtitle file.
+      ...(input.captionsEnabled !== false ? { caption: { file_format: "srt", style: "default" } } : {}),
     }),
   });
 

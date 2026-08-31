@@ -120,7 +120,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
           changesUsed={lead.avatarChangesUsed}
           changesAllowed={tier.avatarChangesAllowed}
         />
-        <VideoNotes token={token} initialNotes={lead.videoNotes} />
+        <VideoNotes token={token} initialNotes={lead.videoNotes} initialCaptionsEnabled={lead.captionsEnabled} />
       </div>
 
       <div className="mt-6 pt-6 border-t border-neutral-800 flex flex-wrap items-start gap-3">

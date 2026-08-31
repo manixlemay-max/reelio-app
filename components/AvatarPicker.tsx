@@ -20,12 +20,22 @@ type Props = {
   changesAllowed: number;
 };
 
+// Avatar look names follow a "<Person> <Scene> <Number>" pattern (e.g.
+// "Saoirse Livingroom 1", "Kenji Office 10") — lets clients pick a setting
+// (office, kitchen, living room, etc.) without HeyGen exposing scene as its
+// own field.
+function extractScene(name: string): string | null {
+  const match = name.match(/^\S+\s+([A-Za-z]+)\s+\d+$/);
+  return match ? match[1] : null;
+}
+
 export default function AvatarPicker({ token, currentAvatarId, currentAvatarName, changesUsed, changesAllowed }: Props) {
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [demoMode, setDemoMode] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [search, setSearch] = useState("");
   const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
+  const [sceneFilter, setSceneFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState(currentAvatarId ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,8 +86,13 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
     }
   }
 
+  const scenes = Array.from(
+    new Set(avatars.map((a) => extractScene(a.name ?? "")).filter((s): s is string => !!s))
+  ).sort();
+
   const filtered = avatars.filter((a) => {
     if (genderFilter !== "all" && a.gender !== genderFilter) return false;
+    if (sceneFilter !== "all" && extractScene(a.name ?? "") !== sceneFilter) return false;
     const name = a.name ?? "";
     if (search && !name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -129,18 +144,34 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
                 className="bg-transparent text-xs text-neutral-100 placeholder-neutral-600 outline-none w-32"
               />
             </div>
-            <div className="flex rounded-lg border border-neutral-800 overflow-hidden text-xs">
-              {(["all", "female", "male"] as const).map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setGenderFilter(g)}
-                  className={`px-2.5 py-1.5 capitalize transition ${
-                    genderFilter === g ? "bg-blue-600 text-white" : "text-neutral-500 hover:bg-neutral-900"
-                  }`}
+            <div className="flex items-center gap-2 flex-wrap">
+              {scenes.length > 0 && (
+                <select
+                  value={sceneFilter}
+                  onChange={(e) => setSceneFilter(e.target.value)}
+                  className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 text-xs px-2 py-1.5"
                 >
-                  {g}
-                </button>
-              ))}
+                  <option value="all">Any setting</option>
+                  {scenes.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <div className="flex rounded-lg border border-neutral-800 overflow-hidden text-xs">
+                {(["all", "female", "male"] as const).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGenderFilter(g)}
+                    className={`px-2.5 py-1.5 capitalize transition ${
+                      genderFilter === g ? "bg-blue-600 text-white" : "text-neutral-500 hover:bg-neutral-900"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

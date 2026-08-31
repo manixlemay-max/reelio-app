@@ -2,8 +2,15 @@
 
 import { useState } from "react";
 
-export default function VideoNotes({ token, initialNotes }: { token: string; initialNotes: string | null }) {
+type Props = {
+  token: string;
+  initialNotes: string | null;
+  initialCaptionsEnabled: boolean;
+};
+
+export default function VideoNotes({ token, initialNotes, initialCaptionsEnabled }: Props) {
   const [notes, setNotes] = useState(initialNotes ?? "");
+  const [captionsEnabled, setCaptionsEnabled] = useState(initialCaptionsEnabled);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +23,7 @@ export default function VideoNotes({ token, initialNotes }: { token: string; ini
       const res = await fetch("/api/leads/video-notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, notes }),
+        body: JSON.stringify({ token, notes, captionsEnabled }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -46,6 +53,22 @@ export default function VideoNotes({ token, initialNotes }: { token: string; ini
         rows={3}
         className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 mb-3"
       />
+
+      <label className="flex items-center gap-2 mb-3 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={captionsEnabled}
+          onChange={(e) => {
+            setCaptionsEnabled(e.target.checked);
+            setSaved(false);
+          }}
+          className="rounded border-neutral-700 bg-neutral-900"
+        />
+        <span className="text-xs text-neutral-400">
+          Include bold on-screen captions (recommended for TikTok/Reels-style videos)
+        </span>
+      </label>
+
       {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
       <div className="flex items-center gap-3">
         <button
