@@ -26,6 +26,7 @@ function WelcomeForm() {
   const [tierName, setTierName] = useState<string | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [reportToken, setReportToken] = useState<string | null>(null);
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
 
   function update(field: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -80,11 +81,19 @@ function WelcomeForm() {
       if (!res.ok || !data.url) {
         throw new Error(data.error || "Could not start connection. Try again shortly.");
       }
-      window.location.href = data.url;
+      // Open in a separate tab instead of navigating away — the client stays
+      // on our page the whole time and just confirms once they're done, so
+      // they never feel like they "left" Reelio.
+      window.open(data.url, "_blank", "noopener,noreferrer");
     } catch (err) {
       setConnectError((err as Error).message);
       setConnecting(null);
     }
+  }
+
+  function confirmConnected(platform: string) {
+    setConnecting(null);
+    setConnectedPlatforms((prev) => (prev.includes(platform) ? prev : [...prev, platform]));
   }
 
   if (submitted) {
@@ -145,9 +154,9 @@ function WelcomeForm() {
           <p className="text-xs text-neutral-500 mb-4">
             {tierName ? `Your ${tierName} plan includes` : "Select"} up to {networksAllowed}{" "}
             connected network{networksAllowed > 1 ? "s" : ""} — pick which one{networksAllowed > 1 ? "s" : ""} you
-            want below. You'll authorize directly on each platform's own screen — we never see or
-            store your password. You can also do this later; just reply to our email whenever
-            you're ready.
+            want below. Connecting opens a new tab where you authorize directly on the
+            platform's own screen — we never see or store your password. You can also do this
+            later; just reply to our email whenever you're ready.
           </p>
           <div className="flex flex-wrap gap-2 mb-4">
             {(["tiktok", "instagram", "youtube"] as const).map((platform) => {
@@ -168,17 +177,46 @@ function WelcomeForm() {
             })}
           </div>
           {selectedPlatforms.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {selectedPlatforms.map((platform) => (
-                <button
-                  key={platform}
-                  onClick={() => connect(platform as "tiktok" | "instagram" | "youtube")}
-                  disabled={connecting !== null}
-                  className="rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium capitalize hover:bg-blue-500 transition disabled:opacity-50"
-                >
-                  {connecting === platform ? "Redirecting..." : `Connect ${platform}`}
-                </button>
-              ))}
+            <div className="space-y-2">
+              {selectedPlatforms.map((platform) => {
+                const isConnected = connectedPlatforms.includes(platform);
+                const isConnecting = connecting === platform;
+                if (isConnected) {
+                  return (
+                    <div
+                      key={platform}
+                      className="flex items-center gap-2 rounded-full border border-green-800 bg-green-950/40 px-4 py-2 text-sm text-green-300 capitalize w-fit"
+                    >
+                      ✓ {platform} connected
+                    </div>
+                  );
+                }
+                return (
+                  <div key={platform} className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => connect(platform as "tiktok" | "instagram" | "youtube")}
+                      disabled={connecting !== null}
+                      className="rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium capitalize hover:bg-blue-500 transition disabled:opacity-50"
+                    >
+                      {isConnecting ? "Opening..." : `Connect ${platform}`}
+                    </button>
+                    {isConnecting && (
+                      <button
+                        onClick={() => confirmConnected(platform)}
+                        className="rounded-full border border-neutral-700 px-4 py-2 text-xs text-neutral-300 hover:border-neutral-500 transition"
+                      >
+                        I&apos;m done — mark as connected
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              {connecting && (
+                <p className="text-xs text-neutral-500">
+                  A new tab opened for {connecting} — authorize there, then come back here and
+                  click &quot;I&apos;m done&quot;.
+                </p>
+              )}
             </div>
           )}
           {connectError && <p className="text-xs text-red-400 mt-3">{connectError}</p>}
