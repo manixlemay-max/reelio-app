@@ -215,7 +215,7 @@ export async function listAvatars(): Promise<AvatarOption[] | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const all: any[] = [];
   let token: string | undefined;
-  for (let page = 0; page < 3; page++) {
+  for (let page = 0; page < 12; page++) {
     const url = new URL(`${HEYGEN_BASE}/v3/avatars/looks`);
     url.searchParams.set("ownership", "public");
     url.searchParams.set("limit", "50");
