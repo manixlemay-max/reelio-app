@@ -20,25 +20,12 @@ type Props = {
   changesAllowed: number;
 };
 
-// Avatar look names follow a "<Person> <Scene> <Number>" pattern (e.g.
-// "Saoirse Livingroom 1", "Kenji Office 10"). We split that into a readable
-// "setting" (Office, Kitchen, Living room...) shown as the main label, and
-// the person + look number shown small underneath — much easier to scan
-// than the raw HeyGen name.
-function parseAvatarName(name: string): { scene: string | null; person: string | null; number: string | null } {
-  const match = name.match(/^(\S+)\s+([A-Za-z]+)\s+(\d+)$/);
-  if (!match) return { scene: null, person: null, number: null };
-  const [, person, scene, number] = match;
-  return { scene: scene.replace(/([a-z])([A-Z])/g, "$1 $2"), person, number };
-}
-
 export default function AvatarPicker({ token, currentAvatarId, currentAvatarName, changesUsed, changesAllowed }: Props) {
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [demoMode, setDemoMode] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [search, setSearch] = useState("");
   const [genderFilter, setGenderFilter] = useState<"all" | "male" | "female">("all");
-  const [sceneFilter, setSceneFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState(currentAvatarId ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,13 +76,8 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
     }
   }
 
-  const scenes = Array.from(
-    new Set(avatars.map((a) => parseAvatarName(a.name ?? "").scene).filter((s): s is string => !!s))
-  ).sort();
-
   const filtered = avatars.filter((a) => {
     if (genderFilter !== "all" && a.gender !== genderFilter) return false;
-    if (sceneFilter !== "all" && parseAvatarName(a.name ?? "").scene !== sceneFilter) return false;
     const name = a.name ?? "";
     if (search && !name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -127,7 +109,7 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
       </p>
       <p className="text-xs text-neutral-500 mb-4">
         {isFirstPick
-          ? "This AI presenter will appear in all your videos, for consistent branding. Pick a setting below, then a person."
+          ? "This AI presenter will appear in all your videos, for consistent branding."
           : `You have ${remaining} avatar change(s) left on your plan.`}
       </p>
 
@@ -137,38 +119,6 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
         <p className="text-xs text-neutral-600">No avatars available right now.</p>
       ) : (
         <>
-          {/* Step 1: pick a setting */}
-          {scenes.length > 0 && (
-            <div className="mb-4">
-              <p className="text-[11px] uppercase tracking-wide text-neutral-600 mb-2">1. Pick a setting</p>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  onClick={() => setSceneFilter("all")}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                    sceneFilter === "all" ? "bg-blue-600 text-white" : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:border-neutral-700"
-                  }`}
-                >
-                  Any setting
-                </button>
-                {scenes.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSceneFilter(s)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                      sceneFilter === s ? "bg-blue-600 text-white" : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:border-neutral-700"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: pick a person */}
-          <p className="text-[11px] uppercase tracking-wide text-neutral-600 mb-2">
-            2. Pick a person{sceneFilter !== "all" ? ` for "${sceneFilter}"` : ""}
-          </p>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <div className="flex items-center gap-1 rounded-lg bg-neutral-900 border border-neutral-800 px-2 py-1.5">
               <Search size={13} className="text-neutral-600" />
@@ -196,7 +146,6 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
 
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-80 overflow-y-auto pr-1 mb-4">
             {filtered.map((a) => {
-              const { scene, person, number } = parseAvatarName(a.name ?? "");
               const selected = selectedId === a.id;
               return (
                 <button
@@ -220,20 +169,11 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
                       <div className="w-full h-full bg-neutral-800" />
                     )}
                   </div>
-                  <div className="px-2 py-1.5">
-                    <p className="text-xs font-medium text-neutral-100 truncate">{scene ?? a.name}</p>
-                    {person && (
-                      <p className="text-[10px] text-neutral-500 truncate">
-                        {person}
-                        {number ? ` · #${number}` : ""}
-                      </p>
-                    )}
-                  </div>
                 </button>
               );
             })}
             {filtered.length === 0 && (
-              <p className="text-xs text-neutral-600 py-4 col-span-full">No avatars match your filters.</p>
+              <p className="text-xs text-neutral-600 py-4 col-span-full">No avatars match your search.</p>
             )}
           </div>
 

@@ -1,6 +1,7 @@
 import { listLeads, listSubscriptions, ensureLeadReportToken, listProducts, listAllSupportRequests } from "@/lib/db";
 import LeadIntegrations from "@/components/LeadIntegrations";
 import SupportRequestItem from "@/components/SupportRequestItem";
+import DeleteClientButton from "@/components/DeleteClientButton";
 import { headers } from "next/headers";
 import Link from "next/link";
 
@@ -69,11 +70,14 @@ export default async function ClientsPage() {
             const badge = statusBadge(sub?.status, sub?.cancelAtPeriodEnd, sub?.currentPeriodEnd);
             return (
               <div key={lead.id} className="rounded-lg border border-neutral-800 p-4">
-                <div className="flex items-baseline justify-between mb-2">
+                <div className="flex items-baseline justify-between mb-2 gap-3">
                   <h2 className="font-medium">{lead.businessName}</h2>
-                  <span className="text-xs text-neutral-500">
-                    {new Date(lead.createdAt).toLocaleString()}
-                  </span>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-xs text-neutral-500">
+                      {new Date(lead.createdAt).toLocaleString()}
+                    </span>
+                    <DeleteClientButton leadId={lead.id} businessName={lead.businessName} />
+                  </div>
                 </div>
                 <p className="text-sm text-neutral-500 mb-1">
                   {lead.name} &middot; {lead.email}

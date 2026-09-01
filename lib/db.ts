@@ -572,6 +572,22 @@ export async function getLeadByToken(token: string): Promise<Lead | undefined> {
   return rows[0] ? toLead(rows[0]) : undefined;
 }
 
+// Deletes a client and everything tied to them in our own data (products,
+// videos, posts, analytics, support messages). Does NOT touch Stripe — if
+// they have a real active subscription, cancel that separately first
+// (their own report page or the Stripe dashboard); this only removes their
+// record and content from Reelio's side.
+export async function deleteLead(id: string): Promise<void> {
+  const sql = getSql();
+  await ensureSchema();
+  const products = await sql`SELECT id FROM products WHERE lead_id = ${id}`;
+  for (const p of products) {
+    await deleteProduct(p.id);
+  }
+  await sql`DELETE FROM support_requests WHERE lead_id = ${id}`;
+  await sql`DELETE FROM leads WHERE id = ${id}`;
+}
+
 // Lazily generates a report_token for leads created before this feature
 // existed. Safe to call every time the link is displayed or visited.
 export async function ensureLeadReportToken(id: string): Promise<string> {

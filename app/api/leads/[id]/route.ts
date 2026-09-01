@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateLeadIntegrations } from "@/lib/db";
+import { updateLeadIntegrations, deleteLead } from "@/lib/db";
 import { isDashboardAuthed } from "@/lib/auth";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -21,4 +21,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   return NextResponse.json({ lead });
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await isDashboardAuthed(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  await deleteLead(id);
+  return NextResponse.json({ ok: true });
 }
