@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Check } from "lucide-react";
 
 type Avatar = {
   id: string;
@@ -21,12 +21,15 @@ type Props = {
 };
 
 // Avatar look names follow a "<Person> <Scene> <Number>" pattern (e.g.
-// "Saoirse Livingroom 1", "Kenji Office 10") — lets clients pick a setting
-// (office, kitchen, living room, etc.) without HeyGen exposing scene as its
-// own field.
-function extractScene(name: string): string | null {
-  const match = name.match(/^\S+\s+([A-Za-z]+)\s+\d+$/);
-  return match ? match[1] : null;
+// "Saoirse Livingroom 1", "Kenji Office 10"). We split that into a readable
+// "setting" (Office, Kitchen, Living room...) shown as the main label, and
+// the person + look number shown small underneath — much easier to scan
+// than the raw HeyGen name.
+function parseAvatarName(name: string): { scene: string | null; person: string | null; number: string | null } {
+  const match = name.match(/^(\S+)\s+([A-Za-z]+)\s+(\d+)$/);
+  if (!match) return { scene: null, person: null, number: null };
+  const [, person, scene, number] = match;
+  return { scene: scene.replace(/([a-z])([A-Z])/g, "$1 $2"), person, number };
 }
 
 export default function AvatarPicker({ token, currentAvatarId, currentAvatarName, changesUsed, changesAllowed }: Props) {
@@ -87,12 +90,12 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
   }
 
   const scenes = Array.from(
-    new Set(avatars.map((a) => extractScene(a.name ?? "")).filter((s): s is string => !!s))
+    new Set(avatars.map((a) => parseAvatarName(a.name ?? "").scene).filter((s): s is string => !!s))
   ).sort();
 
   const filtered = avatars.filter((a) => {
     if (genderFilter !== "all" && a.gender !== genderFilter) return false;
-    if (sceneFilter !== "all" && extractScene(a.name ?? "") !== sceneFilter) return false;
+    if (sceneFilter !== "all" && parseAvatarName(a.name ?? "").scene !== sceneFilter) return false;
     const name = a.name ?? "";
     if (search && !name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -122,9 +125,9 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
       <p className="text-sm font-medium mb-1">
         {isFirstPick ? "Choose your video presenter" : "Change your video presenter"}
       </p>
-      <p className="text-xs text-neutral-500 mb-3">
+      <p className="text-xs text-neutral-500 mb-4">
         {isFirstPick
-          ? "This AI presenter will appear in all your videos, for consistent branding."
+          ? "This AI presenter will appear in all your videos, for consistent branding. Pick a setting below, then a person."
           : `You have ${remaining} avatar change(s) left on your plan.`}
       </p>
 
@@ -134,67 +137,104 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
         <p className="text-xs text-neutral-600">No avatars available right now.</p>
       ) : (
         <>
-          <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
-            <div className="flex items-center gap-1 rounded-lg bg-neutral-900 border border-neutral-800 px-2 py-1">
-              <Search size={13} className="text-neutral-600" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search avatars..."
-                className="bg-transparent text-xs text-neutral-100 placeholder-neutral-600 outline-none w-32"
-              />
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {scenes.length > 0 && (
-                <select
-                  value={sceneFilter}
-                  onChange={(e) => setSceneFilter(e.target.value)}
-                  className="rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 text-xs px-2 py-1.5"
+          {/* Step 1: pick a setting */}
+          {scenes.length > 0 && (
+            <div className="mb-4">
+              <p className="text-[11px] uppercase tracking-wide text-neutral-600 mb-2">1. Pick a setting</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setSceneFilter("all")}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                    sceneFilter === "all" ? "bg-blue-600 text-white" : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:border-neutral-700"
+                  }`}
                 >
-                  <option value="all">Any setting</option>
-                  {scenes.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              )}
-              <div className="flex rounded-lg border border-neutral-800 overflow-hidden text-xs">
-                {(["all", "female", "male"] as const).map((g) => (
+                  Any setting
+                </button>
+                {scenes.map((s) => (
                   <button
-                    key={g}
-                    onClick={() => setGenderFilter(g)}
-                    className={`px-2.5 py-1.5 capitalize transition ${
-                      genderFilter === g ? "bg-blue-600 text-white" : "text-neutral-500 hover:bg-neutral-900"
+                    key={s}
+                    onClick={() => setSceneFilter(s)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                      sceneFilter === s ? "bg-blue-600 text-white" : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:border-neutral-700"
                     }`}
                   >
-                    {g}
+                    {s}
                   </button>
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Step 2: pick a person */}
+          <p className="text-[11px] uppercase tracking-wide text-neutral-600 mb-2">
+            2. Pick a person{sceneFilter !== "all" ? ` for "${sceneFilter}"` : ""}
+          </p>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <div className="flex items-center gap-1 rounded-lg bg-neutral-900 border border-neutral-800 px-2 py-1.5">
+              <Search size={13} className="text-neutral-600" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name..."
+                className="bg-transparent text-xs text-neutral-100 placeholder-neutral-600 outline-none w-32"
+              />
+            </div>
+            <div className="flex rounded-lg border border-neutral-800 overflow-hidden text-xs">
+              {(["all", "female", "male"] as const).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGenderFilter(g)}
+                  className={`px-2.5 py-1.5 capitalize transition ${
+                    genderFilter === g ? "bg-blue-600 text-white" : "text-neutral-500 hover:bg-neutral-900"
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-2.5 max-h-64 overflow-y-auto pr-1 mb-3">
-            {filtered.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => setSelectedId(a.id)}
-                title={a.name}
-                className={`flex flex-col items-center gap-1 w-20 rounded-lg border p-2 transition shrink-0 ${
-                  selectedId === a.id ? "border-blue-400 bg-blue-600/10" : "border-neutral-800 hover:border-neutral-700"
-                }`}
-              >
-                {a.previewImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={a.previewImageUrl} alt={a.name} className="w-14 h-14 object-cover rounded-full" />
-                ) : (
-                  <div className="w-14 h-14 rounded-full bg-neutral-800" />
-                )}
-                <span className="text-[10px] text-neutral-500 max-w-[4.5rem] truncate">{a.name}</span>
-              </button>
-            ))}
-            {filtered.length === 0 && <p className="text-xs text-neutral-600 py-4">No avatars match your search.</p>}
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-80 overflow-y-auto pr-1 mb-4">
+            {filtered.map((a) => {
+              const { scene, person, number } = parseAvatarName(a.name ?? "");
+              const selected = selectedId === a.id;
+              return (
+                <button
+                  key={a.id}
+                  onClick={() => setSelectedId(a.id)}
+                  title={a.name}
+                  className={`relative flex flex-col rounded-xl border overflow-hidden transition text-left ${
+                    selected ? "border-blue-400 ring-1 ring-blue-400" : "border-neutral-800 hover:border-neutral-700"
+                  }`}
+                >
+                  {selected && (
+                    <span className="absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                      <Check size={12} className="text-white" />
+                    </span>
+                  )}
+                  <div className="aspect-[3/4] bg-neutral-900">
+                    {a.previewImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={a.previewImageUrl} alt={a.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-neutral-800" />
+                    )}
+                  </div>
+                  <div className="px-2 py-1.5">
+                    <p className="text-xs font-medium text-neutral-100 truncate">{scene ?? a.name}</p>
+                    {person && (
+                      <p className="text-[10px] text-neutral-500 truncate">
+                        {person}
+                        {number ? ` · #${number}` : ""}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+            {filtered.length === 0 && (
+              <p className="text-xs text-neutral-600 py-4 col-span-full">No avatars match your filters.</p>
+            )}
           </div>
 
           {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
