@@ -202,6 +202,7 @@ export type AvatarOption = {
   previewVideoUrl: string | null;
   defaultVoiceId: string | null;
   gender: string | null;
+  tags: string[];
 };
 
 export async function listAvatars(): Promise<AvatarOption[] | null> {
@@ -215,7 +216,7 @@ export async function listAvatars(): Promise<AvatarOption[] | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const all: any[] = [];
   let token: string | undefined;
-  for (let page = 0; page < 3; page++) {
+  for (let page = 0; page < 12; page++) {
     const url = new URL(`${HEYGEN_BASE}/v3/avatars/looks`);
     url.searchParams.set("ownership", "public");
     url.searchParams.set("limit", "50");
@@ -239,6 +240,7 @@ export async function listAvatars(): Promise<AvatarOption[] | null> {
     previewVideoUrl: item.preview_video_url ?? null,
     defaultVoiceId: item.default_voice_id ?? null,
     gender: item.gender ?? null,
+    tags: item.tags ?? [],
   }));
 
   // Interleave by gender (male, female, other/unknown) round-robin so the
