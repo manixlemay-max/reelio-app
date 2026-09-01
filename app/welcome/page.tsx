@@ -24,7 +24,6 @@ function WelcomeForm() {
   const [networksAllowed, setNetworksAllowed] = useState(3);
   const [avatarChangesAllowed, setAvatarChangesAllowed] = useState(3);
   const [tierName, setTierName] = useState<string | null>(null);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [reportToken, setReportToken] = useState<string | null>(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
 
@@ -62,14 +61,6 @@ function WelcomeForm() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function toggleSelect(platform: string) {
-    setSelectedPlatforms((prev) => {
-      if (prev.includes(platform)) return prev.filter((p) => p !== platform);
-      if (prev.length >= networksAllowed) return prev;
-      return [...prev, platform];
-    });
   }
 
   async function connect(platform: "tiktok" | "instagram" | "youtube") {
@@ -152,72 +143,59 @@ function WelcomeForm() {
         <div className="mt-10 pt-8 border-t border-neutral-800">
           <h2 className="font-medium text-sm mb-1">Connect your accounts</h2>
           <p className="text-xs text-neutral-500 mb-4">
-            {tierName ? `Your ${tierName} plan includes` : "Select"} up to {networksAllowed}{" "}
-            connected network{networksAllowed > 1 ? "s" : ""} — pick which one{networksAllowed > 1 ? "s" : ""} you
-            want below. Connecting opens a new tab where you authorize directly on the
-            platform's own screen — we never see or store your password. You can also do this
-            later; just reply to our email whenever you're ready.
+            {tierName ? `Your ${tierName} plan includes` : "You get"} up to {networksAllowed}{" "}
+            connected network{networksAllowed > 1 ? "s" : ""}. Connect one now and do the rest
+            later if you want — there's no rush. Connecting opens a new tab where you authorize
+            directly on the platform's own screen; we never see or store your password.
           </p>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="space-y-2">
             {(["tiktok", "instagram", "youtube"] as const).map((platform) => {
-              const selected = selectedPlatforms.includes(platform);
-              const disabled = !selected && selectedPlatforms.length >= networksAllowed;
+              const isConnected = connectedPlatforms.includes(platform);
+              const isConnecting = connecting === platform;
+              const atLimit = !isConnected && connectedPlatforms.length >= networksAllowed;
+
+              if (isConnected) {
+                return (
+                  <div
+                    key={platform}
+                    className="flex items-center gap-2 rounded-full border border-green-800 bg-green-950/40 px-4 py-2 text-sm text-green-300 capitalize w-fit"
+                  >
+                    ✓ {platform} connected
+                  </div>
+                );
+              }
+
               return (
-                <button
-                  key={platform}
-                  onClick={() => toggleSelect(platform)}
-                  disabled={disabled}
-                  className={`rounded-full border px-4 py-2 text-sm capitalize transition disabled:opacity-40 ${
-                    selected ? "border-blue-400 bg-blue-600/10" : "border-neutral-800 hover:border-neutral-700"
-                  }`}
-                >
-                  {platform}
-                </button>
+                <div key={platform} className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => connect(platform)}
+                    disabled={connecting !== null || atLimit}
+                    className="rounded-full border border-neutral-800 px-4 py-2 text-sm font-medium capitalize hover:border-neutral-600 transition disabled:opacity-40"
+                  >
+                    {isConnecting ? "Opening..." : `Connect ${platform}`}
+                  </button>
+                  {isConnecting && (
+                    <button
+                      onClick={() => confirmConnected(platform)}
+                      className="rounded-full bg-blue-600 text-white px-4 py-2 text-xs font-medium hover:bg-blue-500 transition"
+                    >
+                      I&apos;m done — mark as connected
+                    </button>
+                  )}
+                  {atLimit && (
+                    <span className="text-xs text-neutral-600">
+                      Plan limit reached ({networksAllowed})
+                    </span>
+                  )}
+                </div>
               );
             })}
           </div>
-          {selectedPlatforms.length > 0 && (
-            <div className="space-y-2">
-              {selectedPlatforms.map((platform) => {
-                const isConnected = connectedPlatforms.includes(platform);
-                const isConnecting = connecting === platform;
-                if (isConnected) {
-                  return (
-                    <div
-                      key={platform}
-                      className="flex items-center gap-2 rounded-full border border-green-800 bg-green-950/40 px-4 py-2 text-sm text-green-300 capitalize w-fit"
-                    >
-                      ✓ {platform} connected
-                    </div>
-                  );
-                }
-                return (
-                  <div key={platform} className="flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={() => connect(platform as "tiktok" | "instagram" | "youtube")}
-                      disabled={connecting !== null}
-                      className="rounded-full bg-blue-600 text-white px-4 py-2 text-sm font-medium capitalize hover:bg-blue-500 transition disabled:opacity-50"
-                    >
-                      {isConnecting ? "Opening..." : `Connect ${platform}`}
-                    </button>
-                    {isConnecting && (
-                      <button
-                        onClick={() => confirmConnected(platform)}
-                        className="rounded-full border border-neutral-700 px-4 py-2 text-xs text-neutral-300 hover:border-neutral-500 transition"
-                      >
-                        I&apos;m done — mark as connected
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-              {connecting && (
-                <p className="text-xs text-neutral-500">
-                  A new tab opened for {connecting} — authorize there, then come back here and
-                  click &quot;I&apos;m done&quot;.
-                </p>
-              )}
-            </div>
+          {connecting && (
+            <p className="text-xs text-neutral-500 mt-3">
+              A new tab opened for {connecting} — authorize there, then come back here and click
+              &quot;I&apos;m done&quot;.
+            </p>
           )}
           {connectError && <p className="text-xs text-red-400 mt-3">{connectError}</p>}
         </div>
