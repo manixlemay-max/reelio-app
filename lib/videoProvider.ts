@@ -209,14 +209,19 @@ export async function listAvatars(): Promise<AvatarOption[] | null> {
   const apiKey = process.env.VIDEO_PROVIDER_API_KEY;
   if (!apiKey) return null;
 
-  // The API returns 50 per page in whatever order HeyGen ranks them, which
-  // can end up skewed toward one gender in just the first page. Pull a few
-  // pages so the picker has real variety, then interleave by gender so both
-  // show up right away instead of one gender dominating the start of the list.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const all: any[] = [];
+  // HeyGen's catalog has several "looks" (different outfits/settings) per
+  // named person — e.g. "Dante Living Room 6" and "Dante Office 2" are the
+  // same face. Dedupe down to one look per person so the picker doesn't show
+  // the same face repeated. Since dedup can shrink hundreds of raw entries
+  // down to a much smaller set of unique people, keep pulling pages (up to a
+  // cap, so a slow/huge catalog can't hang the picker) until either we have
+  // a healthy number of unique people or the catalog runs out.
+  const seenPersons = new Set<string>();
+  const deduped: AvatarOption[] = [];
   let token: string | undefined;
-  for (let page = 0; page < 3; page++) {
+  const TARGET_UNIQUE = 40;
+  const MAX_PAGES = 10;
+  for (let page = 0; page < MAX_PAGES; page++) {
     const url = new URL(`${HEYGEN_BASE}/v3/avatars/looks`);
     url.searchParams.set("ownership", "public");
     url.searchParams.set("limit", "50");
@@ -225,41 +230,34 @@ export async function listAvatars(): Promise<AvatarOption[] | null> {
     const res = await fetch(url.toString(), { headers: heygenHeaders(apiKey) });
     if (!res.ok) break;
     const data = await res.json();
-    all.push(...(data?.data ?? []));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items: any[] = data?.data ?? [];
+    for (const item of items) {
+      const name: string = item.name ?? "";
+      // Name format is "<Person> <Scene words...> <Number>" — the scene part
+      // can be one word ("Office") or two ("Living Room"), so just check
+      // that the last token is a number and use the first token as the key.
+      const parts = name.trim().split(/\s+/);
+      const lastPart = parts[parts.length - 1];
+      const personKey = (parts.length >= 2 && /^\d+$/.test(lastPart) ? parts[0] : name).toLowerCase();
+      if (seenPersons.has(personKey)) continue;
+      seenPersons.add(personKey);
+      deduped.push({
+        id: item.id,
+        name,
+        previewImageUrl: item.preview_image_url ?? null,
+        previewVideoUrl: item.preview_video_url ?? null,
+        defaultVoiceId: item.default_voice_id ?? null,
+        gender: item.gender ?? null,
+        tags: item.tags ?? [],
+      });
+    }
     if (!data?.has_more || !data?.next_token) break;
     token = data.next_token;
+    if (deduped.length >= TARGET_UNIQUE) break;
   }
 
-  if (all.length === 0) return null;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const options: AvatarOption[] = all.map((item: any) => ({
-    id: item.id,
-    name: item.name,
-    previewImageUrl: item.preview_image_url ?? null,
-    previewVideoUrl: item.preview_video_url ?? null,
-    defaultVoiceId: item.default_voice_id ?? null,
-    gender: item.gender ?? null,
-    tags: item.tags ?? [],
-  }));
-
-  // HeyGen's catalog has several "looks" (different outfits/settings) per
-  // named person — e.g. "Dante Livingroom 6" and "Dante Office 2" are the
-  // same face. Keep only the first look per person so the picker doesn't
-  // show the same face repeated multiple times.
-  const seenPersons = new Set<string>();
-  const deduped: AvatarOption[] = [];
-  for (const opt of options) {
-    // Name format is "<Person> <Scene words...> <Number>" — the scene part
-    // can be one word ("Office") or two ("Living Room"), so just check that
-    // the last token is a number and use the first token as the person key.
-    const parts = opt.name.trim().split(/\s+/);
-    const lastPart = parts[parts.length - 1];
-    const personKey = (parts.length >= 2 && /^\d+$/.test(lastPart) ? parts[0] : opt.name).toLowerCase();
-    if (seenPersons.has(personKey)) continue;
-    seenPersons.add(personKey);
-    deduped.push(opt);
-  }
+  if (deduped.length === 0) return null;
 
   // Interleave by gender (male, female, other/unknown) round-robin so the
   // picker shows a mix instead of 50 of one gender before the next.
