@@ -250,8 +250,12 @@ export async function listAvatars(): Promise<AvatarOption[] | null> {
   const seenPersons = new Set<string>();
   const deduped: AvatarOption[] = [];
   for (const opt of options) {
-    const match = opt.name.match(/^(\S+)\s+[A-Za-z]+\s+\d+$/);
-    const personKey = (match ? match[1] : opt.name).toLowerCase();
+    // Name format is "<Person> <Scene words...> <Number>" — the scene part
+    // can be one word ("Office") or two ("Living Room"), so just check that
+    // the last token is a number and use the first token as the person key.
+    const parts = opt.name.trim().split(/\s+/);
+    const lastPart = parts[parts.length - 1];
+    const personKey = (parts.length >= 2 && /^\d+$/.test(lastPart) ? parts[0] : opt.name).toLowerCase();
     if (seenPersons.has(personKey)) continue;
     seenPersons.add(personKey);
     deduped.push(opt);
