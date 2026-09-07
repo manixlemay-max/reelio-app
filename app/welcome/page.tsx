@@ -198,6 +198,13 @@ function WelcomeForm() {
             </p>
           )}
           {connectError && <p className="text-xs text-red-400 mt-3">{connectError}</p>}
+
+          {connectedPlatforms.length > 0 && (
+            <div className="mt-5 rounded-lg border border-green-800 bg-green-950/40 px-4 py-3 text-sm text-green-300">
+              You&apos;re all set! You can close this tab whenever you&apos;re ready — we&apos;ll
+              take it from here and email you as soon as your first video is up.
+            </div>
+          )}
         </div>
       </div>
     );
