@@ -243,13 +243,25 @@ export async function listAvatars(): Promise<AvatarOption[] | null> {
     tags: item.tags ?? [],
   }));
 
+    // HeyGen's catalog has several "looks" (different outfits/settings) per
+  // named person — e.g. "Dante Livingroom 6" and "Dante Office 2" are the
+  // same face. Keep only the first look per person so the picker doesn't
+  // show the same face repeated multiple times.
+  const seenPersons = new Set<string>();
+  const deduped: AvatarOption[] = [];
+  for (const opt of options) {
+    const match = opt.name.match(/^(\S+)\s+[A-Za-z]+\s+\d+$/);
+    const personKey = (match ? match[1] : opt.name).toLowerCase();
+    if (seenPersons.has(personKey)) continue;
+    seenPersons.add(personKey);
+    deduped.push(opt);
+  }
+
   // Interleave by gender (male, female, other/unknown) round-robin so the
   // picker shows a mix instead of 50 of one gender before the next.
   const groups = new Map<string, AvatarOption[]>();
-  for (const opt of options) {
-    const key = opt.gender ?? "unknown";
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(opt);
+  for (const opt of deduped) {
+    
   }
   const buckets = Array.from(groups.values());
   const interleaved: AvatarOption[] = [];
