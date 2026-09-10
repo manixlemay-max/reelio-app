@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AvatarPicker from "@/components/AvatarPicker";
+import ConnectAccounts from "@/components/ConnectAccounts";
 
 function WelcomeForm() {
   const params = useSearchParams();
@@ -19,13 +20,10 @@ function WelcomeForm() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [connecting, setConnecting] = useState<string | null>(null);
-  const [connectError, setConnectError] = useState<string | null>(null);
   const [networksAllowed, setNetworksAllowed] = useState(3);
   const [avatarChangesAllowed, setAvatarChangesAllowed] = useState(3);
   const [tierName, setTierName] = useState<string | null>(null);
   const [reportToken, setReportToken] = useState<string | null>(null);
-  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
 
   function update(field: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -61,30 +59,6 @@ function WelcomeForm() {
     } finally {
       setLoading(false);
     }
-  }
-
-  async function connect(platform: "tiktok" | "instagram" | "youtube") {
-    setConnecting(platform);
-    setConnectError(null);
-    try {
-      const res = await fetch(`/api/postiz/connect?platform=${platform}`);
-      const data = await res.json();
-      if (!res.ok || !data.url) {
-        throw new Error(data.error || "Could not start connection. Try again shortly.");
-      }
-      // Open in a separate tab instead of navigating away — the client stays
-      // on our page the whole time and just confirms once they're done, so
-      // they never feel like they "left" Reelio.
-      window.open(data.url, "_blank", "noopener,noreferrer");
-    } catch (err) {
-      setConnectError((err as Error).message);
-      setConnecting(null);
-    }
-  }
-
-  function confirmConnected(platform: string) {
-    setConnecting(null);
-    setConnectedPlatforms((prev) => (prev.includes(platform) ? prev : [...prev, platform]));
   }
 
   if (submitted) {
@@ -140,72 +114,20 @@ function WelcomeForm() {
           </div>
         )}
 
-        <div className="mt-10 pt-8 border-t border-neutral-800">
-          <h2 className="font-medium text-sm mb-1">Connect your accounts</h2>
-          <p className="text-xs text-neutral-500 mb-4">
-            {tierName ? `Your ${tierName} plan includes` : "You get"} up to {networksAllowed}{" "}
-            connected network{networksAllowed > 1 ? "s" : ""}. Connect one now and do the rest
-            later if you want — there's no rush. Connecting opens a new tab where you authorize
-            directly on the platform's own screen; we never see or store your password.
-          </p>
-          <div className="space-y-2">
-            {(["tiktok", "instagram", "youtube"] as const).map((platform) => {
-              const isConnected = connectedPlatforms.includes(platform);
-              const isConnecting = connecting === platform;
-              const atLimit = !isConnected && connectedPlatforms.length >= networksAllowed;
-
-              if (isConnected) {
-                return (
-                  <div
-                    key={platform}
-                    className="flex items-center gap-2 rounded-full border border-green-800 bg-green-950/40 px-4 py-2 text-sm text-green-300 capitalize w-fit"
-                  >
-                    ✓ {platform} connected
-                  </div>
-                );
-              }
-
-              return (
-                <div key={platform} className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => connect(platform)}
-                    disabled={connecting !== null || atLimit}
-                    className="rounded-full border border-neutral-800 px-4 py-2 text-sm font-medium capitalize hover:border-neutral-600 transition disabled:opacity-40"
-                  >
-                    {isConnecting ? "Opening..." : `Connect ${platform}`}
-                  </button>
-                  {isConnecting && (
-                    <button
-                      onClick={() => confirmConnected(platform)}
-                      className="rounded-full bg-blue-600 text-white px-4 py-2 text-xs font-medium hover:bg-blue-500 transition"
-                    >
-                      I&apos;m done — mark as connected
-                    </button>
-                  )}
-                  {atLimit && (
-                    <span className="text-xs text-neutral-600">
-                      Plan limit reached ({networksAllowed})
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {connecting && (
-            <p className="text-xs text-neutral-500 mt-3">
-              A new tab opened for {connecting} — authorize there, then come back here and click
-              &quot;I&apos;m done&quot;.
+        {reportToken && (
+          <div className="mt-10 pt-8 border-t border-neutral-800">
+            <p className="text-xs text-neutral-500 mb-4">
+              {tierName ? `Your ${tierName} plan includes` : "You get"} up to {networksAllowed}{" "}
+              connected network{networksAllowed > 1 ? "s" : ""}. Connect one now and do the rest
+              later from your report link if you want — there's no rush.
             </p>
-          )}
-          {connectError && <p className="text-xs text-red-400 mt-3">{connectError}</p>}
-
-          {connectedPlatforms.length > 0 && (
-            <div className="mt-5 rounded-lg border border-green-800 bg-green-950/40 px-4 py-3 text-sm text-green-300">
-              You&apos;re all set! You can close this tab whenever you&apos;re ready — we&apos;ll
-              take it from here and email you as soon as your first video is up.
-            </div>
-          )}
-        </div>
+            <ConnectAccounts
+              token={reportToken}
+              networksAllowed={networksAllowed}
+              initialConnected={{ tiktok: false, instagram: false, youtube: false }}
+            />
+          </div>
+        )}
       </div>
     );
   }

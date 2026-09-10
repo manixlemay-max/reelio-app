@@ -4,6 +4,7 @@ import CancelSubscription from "@/components/CancelSubscription";
 import NeedHelp from "@/components/NeedHelp";
 import AvatarPicker from "@/components/AvatarPicker";
 import VideoNotes from "@/components/VideoNotes";
+import ConnectAccounts from "@/components/ConnectAccounts";
 import { listAvatars } from "@/lib/videoProvider";
 import { TIERS } from "@/lib/pricing";
 
@@ -113,6 +114,15 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
       )}
 
       <div className="mt-12 pt-6 border-t border-neutral-800 space-y-4">
+        <ConnectAccounts
+          token={token}
+          networksAllowed={tier.networksAllowed}
+          initialConnected={{
+            tiktok: !!lead.tiktokIntegrationId,
+            instagram: !!lead.instagramIntegrationId,
+            youtube: !!lead.youtubeIntegrationId,
+          }}
+        />
         <AvatarPicker
           token={token}
           currentAvatarId={lead.avatarId}
