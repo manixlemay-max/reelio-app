@@ -72,6 +72,21 @@ function WelcomeForm() {
           </p>
         </div>
 
+        {reportToken && (
+          <div className="mb-10 rounded-lg border border-blue-800 bg-blue-950/40 px-4 py-3 text-sm text-blue-200">
+            <p className="mb-2">
+              Bookmark your private report link now — you&apos;ll use it to see your videos and
+              manage your account any time:
+            </p>
+            <a
+              href={`/report/${reportToken}`}
+              className="font-medium underline break-all hover:text-blue-100"
+            >
+              {typeof window !== "undefined" ? window.location.origin : ""}/report/{reportToken}
+            </a>
+          </div>
+        )}
+
         <ol className="space-y-5">
           {[
             {
@@ -84,7 +99,7 @@ function WelcomeForm() {
             },
             {
               title: "You get a private report link",
-              body: "We'll send you a personal link where you can see your videos and their performance (views, likes, comments) any time — no login required.",
+              body: "Your link is above this list — bookmark it to see your videos and their performance (views, likes, comments) any time, no login required.",
             },
             {
               title: "We keep going",
