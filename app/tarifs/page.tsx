@@ -45,7 +45,7 @@ export default function TarifsPage() {
           <div key={tier.id} className="rounded-2xl border border-neutral-800 p-6 flex flex-col">
             <h3 className="font-medium mb-1">{tier.name}</h3>
             <p className="text-3xl font-semibold mb-4">
-              {tier.priceEur}€<span className="text-sm text-neutral-500 font-normal">/mois</span>
+              {tier.priceUsd}$<span className="text-sm text-neutral-500 font-normal">/mois</span>
             </p>
             <ul className="text-sm text-neutral-400 space-y-2 flex-1 mb-6">
               <li>{tier.networksAllowed} réseau(x) connecté(s)</li>
