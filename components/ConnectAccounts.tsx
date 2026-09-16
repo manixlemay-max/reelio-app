@@ -33,6 +33,12 @@ export default function ConnectAccounts({ token, networksAllowed, initialConnect
   async function connect(platform: Platform) {
     setError(null);
     setBusy(platform);
+    // Open the tab synchronously, right in the click handler — browsers (Safari
+    // especially) revoke the "this came from a real click" permission the moment
+    // we `await` anything first, and silently block window.open (or worse,
+    // navigate the current tab instead), which is exactly what stranded clients
+    // outside Reelio. We navigate this blank tab to the real URL once we have it.
+    const popup = window.open("about:blank", "_blank");
     try {
       const snapshotRes = await fetch(`/api/leads/connect-snapshot?platform=${platform}`);
       const snapshot = await snapshotRes.json();
@@ -44,11 +50,19 @@ export default function ConnectAccounts({ token, networksAllowed, initialConnect
         throw new Error(connectData.error || "Could not start connection. Try again shortly.");
       }
 
-      // Open in a separate tab instead of navigating away — the client stays
-      // on this page and just confirms once they're done.
-      window.open(connectData.url, "_blank", "noopener,noreferrer");
+      if (popup) {
+        popup.location.href = connectData.url;
+      } else {
+        // Popup was blocked even though we tried to open it immediately —
+        // fall back to a same-tab link the client can click themselves rather
+        // than silently failing.
+        throw new Error(
+          "Your browser blocked the connection window. Please allow pop-ups for this site and try again."
+        );
+      }
       setStates((prev) => ({ ...prev, [platform]: "connecting" }));
     } catch (err) {
+      popup?.close();
       setError((err as Error).message);
     } finally {
       setBusy(null);
