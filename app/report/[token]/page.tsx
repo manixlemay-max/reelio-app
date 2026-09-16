@@ -1,4 +1,4 @@
-import { getLeadByToken, getClientReport, listSupportRequestsByLead, getSubscriptionByEmail } from "@/lib/db";
+import { getLeadByToken, getClientReport, listSupportRequestsByLead, getSubscriptionByEmail, getProductsByLead } from "@/lib/db";
 import { notFound } from "next/navigation";
 import CancelSubscription from "@/components/CancelSubscription";
 import NeedHelp from "@/components/NeedHelp";
@@ -18,6 +18,7 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
 
   const { videos, posts, analytics } = await getClientReport(lead.id);
   const messages = await listSupportRequestsByLead(lead.id);
+  const products = await getProductsByLead(lead.id);
 
   const sub = await getSubscriptionByEmail(lead.email);
   const tier = TIERS.find((t) => t.id === sub?.tierId) ?? TIERS[TIERS.length - 1];
@@ -47,6 +48,27 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
         <Stat label="Total likes" value={totalLikes} />
         <Stat label="Total comments" value={totalComments} />
       </div>
+
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-medium">Products</h2>
+        <span className="text-xs text-neutral-500">
+          {products.length} of {tier.productsAllowed ?? "unlimited"}
+        </span>
+      </div>
+      {products.length === 0 ? (
+        <p className="text-sm text-neutral-500 mb-10">
+          No products yet — reach out and we&apos;ll add your first one.
+        </p>
+      ) : (
+        <ul className="space-y-3 mb-12">
+          {products.map((p) => (
+            <li key={p.id} className="rounded-lg border border-neutral-800 p-3">
+              <p className="text-sm font-medium">{p.name}</p>
+              <p className="text-xs text-neutral-500">{p.description}</p>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <h2 className="text-lg font-medium mb-4">Videos</h2>
       {videos.length === 0 ? (
