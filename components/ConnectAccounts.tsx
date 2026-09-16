@@ -89,10 +89,7 @@ export default function ConnectAccounts({ token, networksAllowed, initialConnect
         body: JSON.stringify({ token, platform, beforeIds: beforeIds[platform] }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        const debugText = data.debug ? ` [debug: ${JSON.stringify(data.debug)}]` : "";
-        throw new Error((data.error || "Could not confirm the connection.") + debugText);
-      }
+      if (!res.ok) throw new Error(data.error || "Could not confirm the connection.");
       setStates((prev) => ({ ...prev, [platform]: "connected" }));
     } catch (err) {
       setError((err as Error).message);

@@ -39,34 +39,36 @@ export async function POST(req: NextRequest) {
 
   const field = FIELD_BY_PLATFORM[platform];
   const allLeads = await listLeads();
-  const claimedIds = new Set(
-    allLeads.filter((l) => l.id !== lead.id).map((l) => l[field]).filter((id): id is string => !!id)
-  );
+  const otherLeads = allLeads.filter((l) => l.id !== lead.id);
+  const claimedBy = new Map(otherLeads.filter((l) => l[field]).map((l) => [l[field] as string, l]));
 
-  const unclaimedIds = afterIds.filter((id) => !claimedIds.has(id));
-
-  if (unclaimedIds.length === 0) {
-    return NextResponse.json(
-      {
-        error: "We didn't detect a new connection yet. Make sure you finished authorizing, then try again.",
-        debug: {
-          leadId: lead.id,
-          afterIds,
-          claimedBy: allLeads
-            .filter((l) => afterIds.includes(l[field] ?? ""))
-            .map((l) => ({ leadId: l.id, businessName: l.businessName, integrationId: l[field] })),
-        },
-      },
-      { status: 409 }
-    );
-  }
-
-  // Prefer one that's genuinely new (per the before/after diff) when there's
-  // a choice; otherwise fall back to whichever unclaimed one exists — this is
-  // what makes reconnecting an already-known account (yours, while testing,
-  // or a client's) work instead of only ever-new accounts.
+  const unclaimedIds = afterIds.filter((id) => !claimedBy.has(id));
   const freshUnclaimed = unclaimedIds.filter((id) => !beforeIds.includes(id));
-  const newIntegrationId = freshUnclaimed[freshUnclaimed.length - 1] ?? unclaimedIds[unclaimedIds.length - 1];
+
+  let newIntegrationId: string | undefined =
+    freshUnclaimed[freshUnclaimed.length - 1] ?? unclaimedIds[unclaimedIds.length - 1];
+
+  if (!newIntegrationId) {
+    // Every matching integration is already claimed by someone else. If
+    // there's exactly one candidate, it's unambiguous who just authorized it
+    // — take it over (this is what unblocks re-authorizing an account whose
+    // previous claim is stale, e.g. an old test lead, or a client redoing
+    // their connection under a new link). With more than one candidate we
+    // can't tell which one this client just did, so we refuse rather than
+    // guess and risk stealing the wrong client's account.
+    if (afterIds.length === 1) {
+      const previousOwner = claimedBy.get(afterIds[0]);
+      if (previousOwner) {
+        await updateLeadIntegrations(previousOwner.id, { [field]: null });
+      }
+      newIntegrationId = afterIds[0];
+    } else {
+      return NextResponse.json(
+        { error: "We didn't detect a new connection yet. Make sure you finished authorizing, then try again." },
+        { status: 409 }
+      );
+    }
+  }
 
   await updateLeadIntegrations(lead.id, { [field]: newIntegrationId });
 
