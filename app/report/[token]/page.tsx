@@ -5,6 +5,7 @@ import NeedHelp from "@/components/NeedHelp";
 import AvatarPicker from "@/components/AvatarPicker";
 import VideoNotes from "@/components/VideoNotes";
 import ConnectAccounts from "@/components/ConnectAccounts";
+import ClientCalendar from "@/components/ClientCalendar";
 import { listAvatars } from "@/lib/videoProvider";
 import { TIERS } from "@/lib/pricing";
 
@@ -70,22 +71,10 @@ export default async function ClientReportPage({ params }: { params: Promise<{ t
         </ul>
       )}
 
-      <h2 className="text-lg font-medium mb-4">Posts</h2>
-      {posts.length === 0 ? (
-        <p className="text-sm text-neutral-500">No posts scheduled yet.</p>
-      ) : (
-        <ul className="space-y-3">
-          {posts.map((p) => (
-            <li key={p.id} className="rounded-lg border border-neutral-800 p-3">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-sm font-medium capitalize">{p.platform}</p>
-                <span className="text-xs text-neutral-500">{new Date(p.scheduledAt).toLocaleString()}</span>
-              </div>
-              <p className="text-xs text-neutral-500">{p.productName} · {p.status}</p>
-            </li>
-          ))}
-        </ul>
-      )}
+      <h2 className="text-lg font-medium mb-4">Schedule</h2>
+      <div className="mb-12">
+        <ClientCalendar posts={posts} />
+      </div>
 
       {messages.length > 0 && (
         <>
