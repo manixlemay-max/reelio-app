@@ -47,7 +47,16 @@ export async function POST(req: NextRequest) {
 
   if (unclaimedIds.length === 0) {
     return NextResponse.json(
-      { error: "We didn't detect a new connection yet. Make sure you finished authorizing, then try again." },
+      {
+        error: "We didn't detect a new connection yet. Make sure you finished authorizing, then try again.",
+        debug: {
+          leadId: lead.id,
+          afterIds,
+          claimedBy: allLeads
+            .filter((l) => afterIds.includes(l[field] ?? ""))
+            .map((l) => ({ leadId: l.id, businessName: l.businessName, integrationId: l[field] })),
+        },
+      },
       { status: 409 }
     );
   }
