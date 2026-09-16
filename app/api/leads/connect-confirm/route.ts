@@ -35,8 +35,22 @@ export async function POST(req: NextRequest) {
   const newIds = afterIds.filter((id) => !beforeIds.includes(id));
 
   if (newIds.length === 0) {
+    // Temporary debug info so we can see why the diff came up empty — safe to
+    // remove once this is confirmed working (no secrets, just Postiz integration
+    // ids/identifiers that are already visible in the dashboard).
+    console.log("connect-confirm miss", {
+      platform,
+      beforeIds,
+      allIdentifiers: integrations.map((i) => ({ id: i.id, identifier: i.identifier, name: i.name })),
+    });
     return NextResponse.json(
-      { error: "We didn't detect a new connection yet. Make sure you finished authorizing, then try again." },
+      {
+        error: "We didn't detect a new connection yet. Make sure you finished authorizing, then try again.",
+        debug: {
+          beforeIds,
+          allIntegrations: integrations.map((i) => ({ id: i.id, identifier: i.identifier, name: i.name })),
+        },
+      },
       { status: 409 }
     );
   }
