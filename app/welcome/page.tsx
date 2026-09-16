@@ -141,6 +141,12 @@ function WelcomeForm() {
               networksAllowed={networksAllowed}
               initialConnected={{ tiktok: false, instagram: false, youtube: false }}
             />
+
+            <div className="mt-5 rounded-lg border border-green-800 bg-green-950/40 px-4 py-3 text-sm text-green-300">
+              That&apos;s everything — you can close this tab whenever you&apos;re ready. Use
+              your report link above any time to connect more accounts, see your videos, or
+              change your presenter.
+            </div>
           </div>
         )}
       </div>
