@@ -39,6 +39,16 @@ export default function ConnectAccounts({ token, networksAllowed, initialConnect
     // navigate the current tab instead), which is exactly what stranded clients
     // outside Reelio. We navigate this blank tab to the real URL once we have it.
     const popup = window.open("about:blank", "_blank");
+    // A totally empty popup gets auto-closed by some browsers/ad-blockers as
+    // "suspicious" — give it real content right away so it's treated as a
+    // normal tab and the client sees something while we fetch the real URL.
+    if (popup) {
+      popup.document.write(
+        "<!doctype html><title>Connecting…</title><body style='font-family:sans-serif;padding:2rem;color:#888'>Connecting to " +
+          platform +
+          "…</body>"
+      );
+    }
     try {
       const snapshotRes = await fetch(`/api/leads/connect-snapshot?platform=${platform}`);
       const snapshot = await snapshotRes.json();
@@ -50,19 +60,19 @@ export default function ConnectAccounts({ token, networksAllowed, initialConnect
         throw new Error(connectData.error || "Could not start connection. Try again shortly.");
       }
 
-      if (popup) {
+      if (popup && !popup.closed) {
         popup.location.href = connectData.url;
       } else {
-        // Popup was blocked even though we tried to open it immediately —
-        // fall back to a same-tab link the client can click themselves rather
-        // than silently failing.
-        throw new Error(
-          "Your browser blocked the connection window. Please allow pop-ups for this site and try again."
-        );
+        // Popup was blocked or closed itself before we had the real URL —
+        // fall back to opening it fresh now (still a user-gesture-adjacent
+        // call, most browsers allow this one) rather than silently failing.
+        window.open(connectData.url, "_blank");
       }
       setStates((prev) => ({ ...prev, [platform]: "connecting" }));
     } catch (err) {
-      popup?.close();
+      // Leave the popup open (showing the error in our own tab) instead of
+      // closing it — an abruptly vanishing tab is more confusing than a
+      // leftover blank one.
       setError((err as Error).message);
     } finally {
       setBusy(null);
