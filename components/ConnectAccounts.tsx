@@ -144,6 +144,16 @@ export default function ConnectAccounts({ token, networksAllowed, initialConnect
                   >
                     {isBusy ? "Checking..." : "I'm done — mark as connected"}
                   </button>
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      setStates((prev) => ({ ...prev, [platform]: "idle" }));
+                    }}
+                    disabled={isBusy}
+                    className="text-xs text-neutral-500 hover:text-neutral-300 transition disabled:opacity-40"
+                  >
+                    Cancel
+                  </button>
                 </>
               )}
               {atLimit && <span className="text-xs text-neutral-600">Plan limit reached ({networksAllowed})</span>}
