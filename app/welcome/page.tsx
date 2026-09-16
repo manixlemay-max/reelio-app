@@ -143,9 +143,16 @@ function WelcomeForm() {
             />
 
             <div className="mt-5 rounded-lg border border-green-800 bg-green-950/40 px-4 py-3 text-sm text-green-300">
-              That&apos;s everything — you can close this tab whenever you&apos;re ready. Use
-              your report link above any time to connect more accounts, see your videos, or
-              change your presenter.
+              <p className="mb-3">
+                That&apos;s everything on our end. Head to your dashboard to connect more
+                accounts, watch your videos come in, or change your presenter any time.
+              </p>
+              <a
+                href={`/report/${reportToken}`}
+                className="inline-block rounded-full bg-green-500 text-neutral-950 px-4 py-2 text-sm font-medium hover:bg-green-400 transition"
+              >
+                Go to your dashboard →
+              </a>
             </div>
           </div>
         )}
