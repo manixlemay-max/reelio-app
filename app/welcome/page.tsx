@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AvatarPicker from "@/components/AvatarPicker";
 import ConnectAccounts from "@/components/ConnectAccounts";
+import Logo from "@/components/Logo";
 
 function WelcomeForm() {
   const params = useSearchParams();
@@ -90,6 +91,9 @@ function WelcomeForm() {
   if (submitted) {
     return (
       <div className="max-w-lg mx-auto py-20 px-6">
+        <div className="mb-10 flex justify-center">
+          <Logo href="/" />
+        </div>
         <div className="text-center mb-10">
           <h1 className="text-2xl font-semibold mb-3">Thank you — you're all set!</h1>
           <p className="text-neutral-500">
@@ -188,6 +192,9 @@ function WelcomeForm() {
 
   return (
     <div className="max-w-lg mx-auto py-16 px-6">
+      <div className="mb-8 flex justify-center">
+        <Logo href="/" />
+      </div>
       {checkoutSuccess && (
         <div className="mb-8 rounded-lg border border-green-800 bg-green-950/40 px-4 py-3 text-sm text-green-300">
           Payment received — welcome to Reelio! Tell us a bit about your business so we
