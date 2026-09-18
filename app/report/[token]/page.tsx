@@ -6,7 +6,6 @@ import NeedHelp from "@/components/NeedHelp";
 import AvatarPicker from "@/components/AvatarPicker";
 import VideoNotes from "@/components/VideoNotes";
 import ConnectAccounts from "@/components/ConnectAccounts";
-import { listAvatars } from "@/lib/videoProvider";
 import { TIERS } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
@@ -21,11 +20,6 @@ export default async function ClientOverviewPage({ params }: { params: Promise<{
 
   const sub = await getSubscriptionByEmail(lead.email);
   const tier = TIERS.find((t) => t.id === sub?.tierId) ?? TIERS[TIERS.length - 1];
-  let currentAvatarName: string | null = null;
-  if (lead.avatarId) {
-    const avatars = await listAvatars();
-    currentAvatarName = avatars?.find((a) => a.id === lead.avatarId)?.name ?? null;
-  }
 
   const totalViews = analytics.reduce((sum, a) => sum + a.views, 0);
   const totalLikes = analytics.reduce((sum, a) => sum + a.likes, 0);
@@ -113,13 +107,7 @@ export default async function ClientOverviewPage({ params }: { params: Promise<{
             youtube: !!lead.youtubeIntegrationId,
           }}
         />
-        <AvatarPicker
-          token={token}
-          currentAvatarId={lead.avatarId}
-          currentAvatarName={currentAvatarName}
-          changesUsed={lead.avatarChangesUsed}
-          changesAllowed={tier.avatarChangesAllowed}
-        />
+        <AvatarPicker token={token} initialAvatarIds={lead.avatarIds} maxAvatars={tier.avatarChangesAllowed} />
         <VideoNotes token={token} initialNotes={lead.videoNotes} initialCaptionsEnabled={lead.captionsEnabled} />
       </div>
 

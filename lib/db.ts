@@ -107,6 +107,10 @@ function ensureSchema(): Promise<void> {
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS avatar_id TEXT`;
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS voice_id TEXT`;
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS avatar_changes_used INTEGER NOT NULL DEFAULT 0`;
+      // JSON-encoded array of {id, voiceId} — the full set of avatars this
+      // client has chosen; a video picks one at random each time. Superseded
+      // the single avatar_id/voice_id columns above, kept in sync for compat.
+      await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS avatar_ids TEXT`;
       // Free-text notes from the client on what to mention/emphasize in
       // their videos (a promo code, a feature, a call to action).
       await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS video_notes TEXT`;
@@ -492,6 +496,10 @@ export type Lead = {
   avatarId: string | null;
   voiceId: string | null;
   avatarChangesUsed: number;
+  // The set of avatars this client has chosen (up to their plan's limit,
+  // see Tier.avatarChangesAllowed) — a video picks one of these at random
+  // each time it's generated, for visual variety across their videos.
+  avatarIds: { id: string; voiceId: string | null }[];
   videoNotes: string | null;
   captionsEnabled: boolean;
   createdAt: string;
@@ -514,6 +522,7 @@ function toLead(row: any): Lead {
     avatarId: row.avatar_id ?? null,
     voiceId: row.voice_id ?? null,
     avatarChangesUsed: row.avatar_changes_used ?? 0,
+    avatarIds: parseAvatarIds(row.avatar_ids, row.avatar_id, row.voice_id),
     videoNotes: row.video_notes ?? null,
     captionsEnabled: row.captions_enabled ?? true,
     createdAt: row.created_at,
@@ -551,6 +560,7 @@ export async function createLead(input: {
     avatarId: null,
     voiceId: null,
     avatarChangesUsed: 0,
+    avatarIds: [],
     videoNotes: null,
     captionsEnabled: true,
     createdAt,
@@ -679,26 +689,39 @@ export async function updateLeadIntegrations(
   return { ...existing, tiktokIntegrationId: tiktok, instagramIntegrationId: instagram, youtubeIntegrationId: youtube };
 }
 
-// Sets (or changes) the client's chosen AI avatar. Pass incrementChangeCount
-// = true only when this is an actual change (not their first pick) — the
-// caller is responsible for checking the plan's change limit first.
-export async function updateLeadAvatar(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseAvatarIds(raw: any, fallbackId: string | null, fallbackVoiceId: string | null): { id: string; voiceId: string | null }[] {
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // fall through to legacy fallback below
+    }
+  }
+  // Legacy single-avatar leads (picked before multi-avatar support existed)
+  // still show up as one entry instead of an empty set.
+  return fallbackId ? [{ id: fallbackId, voiceId: fallbackVoiceId }] : [];
+}
+
+// Replaces the client's whole set of chosen avatars — the caller is
+// responsible for checking the plan's pool-size limit first. Also keeps the
+// legacy avatar_id/voice_id columns pointing at the first entry, so any code
+// still reading those (or an old cached page) sees a sane single avatar.
+export async function updateLeadAvatars(
   id: string,
-  avatarId: string,
-  voiceId: string | null,
-  incrementChangeCount: boolean
+  avatarIds: { id: string; voiceId: string | null }[]
 ): Promise<void> {
   const sql = getSql();
   await ensureSchema();
-  if (incrementChangeCount) {
-    await sql`
-      UPDATE leads
-      SET avatar_id = ${avatarId}, voice_id = ${voiceId}, avatar_changes_used = avatar_changes_used + 1
-      WHERE id = ${id}
-    `;
-  } else {
-    await sql`UPDATE leads SET avatar_id = ${avatarId}, voice_id = ${voiceId} WHERE id = ${id}`;
-  }
+  const first = avatarIds[0] ?? null;
+  await sql`
+    UPDATE leads
+    SET avatar_ids = ${JSON.stringify(avatarIds)},
+        avatar_id = ${first?.id ?? null},
+        voice_id = ${first?.voiceId ?? null}
+    WHERE id = ${id}
+  `;
 }
 
 export async function updateLeadVideoNotes(id: string, notes: string): Promise<void> {

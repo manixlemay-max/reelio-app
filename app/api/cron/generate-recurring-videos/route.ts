@@ -68,15 +68,19 @@ export async function GET(req: NextRequest) {
     }
 
     for (let i = 0; i < dueCount; i++) {
+      // Pick one of the client's chosen presenters at random each time, for
+      // variety across their videos — falls back to auto-pick if they
+      // haven't chosen any yet.
+      const chosenAvatar =
+        lead.avatarIds.length > 0 ? lead.avatarIds[Math.floor(Math.random() * lead.avatarIds.length)] : null;
+
       const result = await generateVideo({
         productName: product.name,
         productDescription: product.description,
         imageUrl: product.imageUrl,
         imageAssetId: product.heygenAssetId,
-        // Use the client's chosen AI presenter for consistent branding once
-        // they've picked one; falls back to auto-pick until they do.
-        avatarId: lead.avatarId,
-        voiceId: lead.voiceId,
+        avatarId: chosenAvatar?.id ?? null,
+        voiceId: chosenAvatar?.voiceId ?? null,
         styleNotes: lead.videoNotes,
         captionsEnabled: lead.captionsEnabled,
       });

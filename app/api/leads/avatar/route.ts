@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getLeadByToken, getSubscriptionByEmail, updateLeadAvatar } from "@/lib/db";
+import { getLeadByToken, getSubscriptionByEmail, updateLeadAvatars } from "@/lib/db";
 import { TIERS } from "@/lib/pricing";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { token, avatarId, voiceId } = body as { token?: string; avatarId?: string; voiceId?: string | null };
+  const { token, avatarIds } = body as {
+    token?: string;
+    avatarIds?: { id: string; voiceId: string | null }[];
+  };
 
-  if (!token || !avatarId) {
-    return NextResponse.json({ error: "Missing token or avatarId" }, { status: 400 });
+  if (!token || !Array.isArray(avatarIds) || avatarIds.length === 0) {
+    return NextResponse.json({ error: "Missing token or avatarIds" }, { status: 400 });
   }
 
   const lead = await getLeadByToken(token);
@@ -15,28 +18,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Same avatar re-submitted — nothing to do, don't burn a change.
-  if (lead.avatarId === avatarId) {
-    return NextResponse.json({ ok: true, avatarId, changesUsed: lead.avatarChangesUsed });
+  const sub = await getSubscriptionByEmail(lead.email);
+  const tier = TIERS.find((t) => t.id === sub?.tierId) ?? TIERS[0];
+
+  // null = unlimited pool size on this tier, nothing to enforce.
+  if (tier.avatarChangesAllowed !== null && avatarIds.length > tier.avatarChangesAllowed) {
+    return NextResponse.json(
+      { error: `Your plan allows up to ${tier.avatarChangesAllowed} avatar(s) — pick fewer.` },
+      { status: 400 }
+    );
   }
 
-  const isFirstPick = !lead.avatarId;
+  await updateLeadAvatars(lead.id, avatarIds);
 
-  if (!isFirstPick) {
-    const sub = await getSubscriptionByEmail(lead.email);
-    const tier = TIERS.find((t) => t.id === sub?.tierId) ?? TIERS[0];
-    // null = unlimited changes on this tier, nothing to enforce.
-    if (tier.avatarChangesAllowed !== null && lead.avatarChangesUsed >= tier.avatarChangesAllowed) {
-      return NextResponse.json(
-        {
-          error: `You've used all ${tier.avatarChangesAllowed} avatar change(s) included in your plan.`,
-        },
-        { status: 400 }
-      );
-    }
-  }
-
-  await updateLeadAvatar(lead.id, avatarId, voiceId ?? null, !isFirstPick);
-
-  return NextResponse.json({ ok: true, avatarId, changesUsed: isFirstPick ? lead.avatarChangesUsed : lead.avatarChangesUsed + 1 });
+  return NextResponse.json({ ok: true, avatarIds });
 }

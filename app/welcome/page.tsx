@@ -159,7 +159,7 @@ function WelcomeForm() {
               Pick the AI avatar that will present your products — it'll stay consistent across
               your videos. You can also do this later from your report link.
             </p>
-            <AvatarPicker token={reportToken} changesUsed={0} changesAllowed={avatarChangesAllowed} />
+            <AvatarPicker token={reportToken} initialAvatarIds={[]} maxAvatars={avatarChangesAllowed} />
           </div>
         )}
 
