@@ -20,6 +20,9 @@ function WelcomeForm() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [productImage, setProductImage] = useState<{ url: string; assetId: string } | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [networksAllowed, setNetworksAllowed] = useState(3);
   const [avatarChangesAllowed, setAvatarChangesAllowed] = useState(3);
   const [tierName, setTierName] = useState<string | null>(null);
@@ -27,6 +30,25 @@ function WelcomeForm() {
 
   function update(field: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageError(null);
+    setImageUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/products/upload-image", { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not upload the image.");
+      setProductImage({ url: data.url, assetId: data.assetId });
+    } catch (err) {
+      setImageError((err as Error).message);
+    } finally {
+      setImageUploading(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -37,7 +59,11 @@ function WelcomeForm() {
       const res = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          productImageUrl: productImage?.url,
+          productImageAssetId: productImage?.assetId,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -226,6 +252,35 @@ function WelcomeForm() {
             className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500"
           />
         </div>
+        <div>
+          <label className="block text-sm mb-1 text-neutral-400">
+            Product photo <span className="text-neutral-600">(optional, but your video looks much better with one)</span>
+          </label>
+          {productImage ? (
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={productImage.url} alt="Product" className="w-16 h-16 rounded-lg object-cover border border-neutral-800" />
+              <button
+                type="button"
+                onClick={() => setProductImage(null)}
+                className="text-xs text-neutral-500 hover:text-neutral-300 transition"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleImageSelect}
+              disabled={imageUploading}
+              className="w-full text-sm text-neutral-400 file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-800 file:px-3 file:py-2 file:text-neutral-200 file:text-sm hover:file:bg-neutral-700 file:cursor-pointer disabled:opacity-50"
+            />
+          )}
+          {imageUploading && <p className="text-xs text-neutral-500 mt-1">Uploading...</p>}
+          {imageError && <p className="text-xs text-red-400 mt-1">{imageError}</p>}
+        </div>
+
         <div>
           <label className="block text-sm mb-1 text-neutral-400">Anything else we should know?</label>
           <textarea

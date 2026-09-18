@@ -31,12 +31,15 @@ export async function POST(req: NextRequest) {
     const product = await createProduct({
       name: lead.businessName,
       description: lead.productDescription,
+      imageUrl: body.productImageUrl || undefined,
+      heygenAssetId: body.productImageAssetId || undefined,
       leadId: lead.id,
     });
 
     const result = await generateVideo({
       productName: product.name,
       productDescription: product.description,
+      imageAssetId: product.heygenAssetId,
     });
 
     await createVideo({

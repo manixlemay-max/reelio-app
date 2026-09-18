@@ -3,6 +3,9 @@ export type Product = {
   name: string;
   description: string;
   imageUrl: string | null;
+  // HeyGen's own asset id for imageUrl, once uploaded — needed to compose a
+  // studio video that actually shows the product, not just a talking avatar.
+  heygenAssetId: string | null;
   leadId: string | null;
   createdAt: string;
 };

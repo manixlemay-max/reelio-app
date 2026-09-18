@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     productName: product.name,
     productDescription: product.description,
     imageUrl: product.imageUrl,
+    imageAssetId: product.heygenAssetId,
     avatarId: body.avatarId || null,
     voiceId: body.voiceId || null,
   });

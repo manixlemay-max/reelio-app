@@ -1,25 +1,52 @@
 // Integration with HeyGen (heygen.com) — AI video generation.
-// Docs used to build this: https://developers.heygen.com/docs/quick-start
+// Docs used to build this: https://developers.heygen.com/docs/quick-start,
+// https://developers.heygen.com/studio-videos, https://developers.heygen.com/reference/upload-asset
 //
-// Two ways to generate a video:
+// Three ways to generate a video:
 // 1. Video Agent (default, no avatar chosen): prompt -> HeyGen picks everything
 //    (avatar, voice, scene) -> video. Async: POST /v3/video-agents returns a
 //    session_id, which we poll for a video_id, which we then poll for status.
 // 2. Explicit avatar (when the dashboard user picks one from the avatar
-//    picker): POST /v3/videos with type "avatar", a specific avatar_id, a
-//    script we write, and that avatar's default voice_id. This returns a
-//    video_id directly (no session step).
+//    picker, and there's no product photo): POST /v3/videos with type
+//    "avatar", a specific avatar_id, a script we write, and that avatar's
+//    default voice_id. Returns a video_id directly (no session step).
+// 3. Studio (when the client uploaded a product photo — see
+//    app/api/products/upload-image): POST /v3/videos with type "studio",
+//    composing an avatar-talking scene with a second scene showing the
+//    product image, so the video actually features the product instead of
+//    just a talking head describing it. Same video_id/status shape as #2.
 //
-// Both flows converge on the same GET /v3/videos/{video_id} status endpoint,
+// All three converge on the same GET /v3/videos/{video_id} status endpoint,
 // so checkVideoProgress() just needs to know which flow started the job. We
-// tag externalJobId with a small prefix ("avatar:" or "agent:") to remember.
+// tag externalJobId with a small prefix ("avatar:" or "agent:") to remember
+// — studio jobs reuse the "avatar:" prefix since they poll identically.
 
 const HEYGEN_BASE = process.env.VIDEO_PROVIDER_API_URL || "https://api.heygen.com";
+
+// A handful of different opening hooks/angles for the spoken script, picked
+// at random each time so a client's videos don't all sound identical. Every
+// variant works for a physical or digital product alike (no "grab yours" /
+// "add to cart" language that only makes sense for something you can hold).
+const SCRIPT_TEMPLATES: ((name: string, description: string, notesLine: string) => string)[] = [
+  (name, desc, notes) =>
+    `Hey! I have to tell you about ${name}. ${desc}${notes} Honestly, it's been such a game changer for me — you have to try it for yourself. Check it out today!`,
+  (name, desc, notes) =>
+    `Okay, I was not expecting ${name} to be this good.${notes ? ` ${notes.trim()}.` : ""} ${desc} If you've been on the fence, this is your sign.`,
+  (name, desc, notes) =>
+    `POV: you finally tried ${name}. ${desc}${notes} I genuinely don't know how I managed without it — you need to see this.`,
+  (name, desc, notes) =>
+    `So this is why everyone's been talking about ${name}. ${desc}${notes} Trust me, it's worth checking out.`,
+  (name, desc, notes) =>
+    `I wasn't going to say anything, but ${name} deserves the hype. ${desc}${notes} Go see what all the buzz is about.`,
+];
 
 type GenerateVideoInput = {
   productName: string;
   productDescription: string;
   imageUrl?: string | null;
+  // HeyGen's asset id for the uploaded product photo, if any — enables the
+  // studio flow (avatar + product image scene) instead of avatar-only.
+  imageAssetId?: string | null;
   // If set (from the avatar picker in the dashboard), use the explicit
   // avatar flow instead of letting HeyGen's Video Agent auto-pick one.
   avatarId?: string | null;
@@ -85,35 +112,58 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
     voiceId = fallback.defaultVoiceId;
   }
 
-  // "Grab yours today" only makes sense for something physical you can hold —
-  // clients sell digital products too (software, courses, apps), so the
-  // closing line has to work for both without sounding odd for either.
+  // Pick a random opening angle each time so a client's videos vary instead
+  // of all reading identically — still fully automatic, no choice needed
+  // from the client or from Manix.
   const notesLine = input.styleNotes?.trim() ? ` ${input.styleNotes.trim()}` : "";
-  const script = `Hey! I have to tell you about ${input.productName}. ${input.productDescription}${notesLine} Honestly, it's been such a game changer for me — you have to try it for yourself. Check it out today!`;
+  const template = SCRIPT_TEMPLATES[Math.floor(Math.random() * SCRIPT_TEMPLATES.length)];
+  const script = template(input.productName, input.productDescription, notesLine);
+
+  const captionOption = input.captionsEnabled !== false ? { caption: { file_format: "srt", style: "default" } } : {};
+
+  // With a product photo on file, compose a studio video: the avatar reads
+  // the script, then the actual product is shown on screen — real UGC-style
+  // proof, not just narration. Without one (e.g. a digital product with no
+  // photo), fall back to the plain avatar-only video.
+  const body = input.imageAssetId
+    ? {
+        type: "studio",
+        title: `${input.productName} — Reelio UGC video`,
+        resolution: "1080p",
+        aspect_ratio: "9:16",
+        ...captionOption,
+        scenes: [
+          {
+            type: "avatar_video",
+            input: { type: "avatar", avatar_id: avatarId, script, voice_id: voiceId || undefined },
+          },
+          {
+            type: "image",
+            source: { type: "asset_id", asset_id: input.imageAssetId },
+            duration: 4,
+          },
+        ],
+      }
+    : {
+        type: "avatar",
+        avatar_id: avatarId,
+        script,
+        voice_id: voiceId || undefined,
+        resolution: "1080p",
+        aspect_ratio: "9:16",
+        // Ensures the avatar fills the whole vertical frame (no letterboxing)
+        // regardless of the source look's own native orientation — otherwise
+        // HeyGen picks "the best option based on source and canvas
+        // orientations", which can vary avatar to avatar.
+        fit: "cover",
+        title: `${input.productName} — Reelio UGC video`,
+        ...captionOption,
+      };
 
   const res = await fetch(`${HEYGEN_BASE}/v3/videos`, {
     method: "POST",
     headers: heygenHeaders(apiKey, { "Content-Type": "application/json" }),
-    body: JSON.stringify({
-      type: "avatar",
-      avatar_id: avatarId,
-      script,
-      voice_id: voiceId || undefined,
-      resolution: "1080p",
-      aspect_ratio: "9:16",
-      // Ensures the avatar fills the whole vertical frame (no letterboxing)
-      // regardless of the source look's own native orientation — otherwise
-      // HeyGen picks "the best option based on source and canvas
-      // orientations", which can vary avatar to avatar.
-      fit: "cover",
-      title: `${input.productName} — Reelio UGC video`,
-      // Bold on-screen captions burned into the video, like typical viral
-      // UGC content — client-controlled (report page toggle). NOTE: verify
-      // this renders as expected once live — HeyGen's docs are inconsistent
-      // about whether v3/videos burns captions in or only returns a sidecar
-      // subtitle file.
-      ...(input.captionsEnabled !== false ? { caption: { file_format: "srt", style: "default" } } : {}),
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
