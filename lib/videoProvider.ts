@@ -85,8 +85,11 @@ export async function generateVideo(input: GenerateVideoInput): Promise<Generate
     voiceId = fallback.defaultVoiceId;
   }
 
+  // "Grab yours today" only makes sense for something physical you can hold —
+  // clients sell digital products too (software, courses, apps), so the
+  // closing line has to work for both without sounding odd for either.
   const notesLine = input.styleNotes?.trim() ? ` ${input.styleNotes.trim()}` : "";
-  const script = `Hey! I have to tell you about ${input.productName}. ${input.productDescription}${notesLine} Honestly, it's been such a game changer for me — you have to try it for yourself. Grab yours today!`;
+  const script = `Hey! I have to tell you about ${input.productName}. ${input.productDescription}${notesLine} Honestly, it's been such a game changer for me — you have to try it for yourself. Check it out today!`;
 
   const res = await fetch(`${HEYGEN_BASE}/v3/videos`, {
     method: "POST",

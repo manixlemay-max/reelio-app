@@ -21,7 +21,21 @@ const HOOK_TEMPLATES = [
   (name: string) => `${name} — the honest review nobody asked for`,
 ];
 
-const GENERIC_HASHTAGS = ["#tiktokmademebuyit", "#musthave", "#smallbusiness", "#ugccreator", "#shopsmall", "#viralproduct", "#fyp"];
+// Mix of physical-product and digital-product-friendly generic tags — a
+// shopping-only set ("shopsmall", "tiktokmademebuyit") reads oddly on an app
+// or course launch, so both kinds are represented and shuffled together.
+const GENERIC_HASHTAGS = [
+  "#musthave",
+  "#smallbusiness",
+  "#ugccreator",
+  "#tiktokmademebuyit",
+  "#shopsmall",
+  "#viralproduct",
+  "#gamechanger",
+  "#worthit",
+  "#foundgem",
+  "#fyp",
+];
 
 function extractKeywords(text: string, max: number): string[] {
   const counts = new Map<string, number>();
