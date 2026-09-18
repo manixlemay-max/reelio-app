@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
   if (!isFirstPick) {
     const sub = await getSubscriptionByEmail(lead.email);
     const tier = TIERS.find((t) => t.id === sub?.tierId) ?? TIERS[0];
-    if (lead.avatarChangesUsed >= tier.avatarChangesAllowed) {
+    // null = unlimited changes on this tier, nothing to enforce.
+    if (tier.avatarChangesAllowed !== null && lead.avatarChangesUsed >= tier.avatarChangesAllowed) {
       return NextResponse.json(
         {
           error: `You've used all ${tier.avatarChangesAllowed} avatar change(s) included in your plan.`,

@@ -42,7 +42,7 @@ export const TIERS: Tier[] = [
     networksAllowed: 3,
     videosPerMonth: 50,
     productsAllowed: null,
-    avatarChangesAllowed: 3,
+    avatarChangesAllowed: null,
     competitorAnalysis: true,
     stripePriceEnvVar: "STRIPE_PRICE_PRO",
     stripePriceEnvVarYearly: "STRIPE_PRICE_PRO_YEARLY",

@@ -60,8 +60,8 @@ export type Tier = {
   // Max distinct products a client can have videos made for. null = unlimited.
   productsAllowed: number | null;
   // How many times a client can swap their chosen AI avatar (their first
-  // pick is free and doesn't count against this).
-  avatarChangesAllowed: number;
+  // pick is free and doesn't count against this). null = unlimited.
+  avatarChangesAllowed: number | null;
   competitorAnalysis: boolean;
   stripePriceEnvVar: string;
   stripePriceEnvVarYearly: string;

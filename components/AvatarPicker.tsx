@@ -17,7 +17,7 @@ type Props = {
   currentAvatarId?: string | null;
   currentAvatarName?: string | null;
   changesUsed: number;
-  changesAllowed: number;
+  changesAllowed: number | null; // null = unlimited
 };
 
 export default function AvatarPicker({ token, currentAvatarId, currentAvatarName, changesUsed, changesAllowed }: Props) {
@@ -46,8 +46,9 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
   }, []);
 
   const isFirstPick = !savedAvatarId;
-  const remaining = isFirstPick ? null : Math.max(0, changesAllowed - usedCount);
-  const canChange = isFirstPick || remaining! > 0;
+  const unlimited = changesAllowed === null;
+  const remaining = isFirstPick || unlimited ? null : Math.max(0, changesAllowed - usedCount);
+  const canChange = isFirstPick || unlimited || remaining! > 0;
 
   async function save() {
     if (!selectedId) {
@@ -96,7 +97,7 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
           disabled={!canChange}
           className="text-xs text-blue-400 hover:underline disabled:text-neutral-600 disabled:no-underline disabled:cursor-not-allowed"
         >
-          {canChange ? `Change avatar (${remaining} left)` : "No changes left on your plan"}
+          {canChange ? (unlimited ? "Change avatar" : `Change avatar (${remaining} left)`) : "No changes left on your plan"}
         </button>
       </div>
     );
@@ -110,7 +111,9 @@ export default function AvatarPicker({ token, currentAvatarId, currentAvatarName
       <p className="text-xs text-neutral-500 mb-4">
         {isFirstPick
           ? "This AI presenter will appear in all your videos, for consistent branding."
-          : `You have ${remaining} avatar change(s) left on your plan.`}
+          : unlimited
+            ? "Your plan includes unlimited avatar changes."
+            : `You have ${remaining} avatar change(s) left on your plan.`}
       </p>
 
       {!loaded ? (

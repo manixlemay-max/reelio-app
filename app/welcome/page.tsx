@@ -25,7 +25,7 @@ function WelcomeForm() {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [networksAllowed, setNetworksAllowed] = useState(3);
-  const [avatarChangesAllowed, setAvatarChangesAllowed] = useState(3);
+  const [avatarChangesAllowed, setAvatarChangesAllowed] = useState<number | null>(3);
   const [tierName, setTierName] = useState<string | null>(null);
   const [reportToken, setReportToken] = useState<string | null>(null);
 
@@ -77,7 +77,11 @@ function WelcomeForm() {
         .then((r) => r.json())
         .then((tierData) => {
           setNetworksAllowed(tierData.networksAllowed ?? 3);
-          setAvatarChangesAllowed(tierData.avatarChangesAllowed ?? 3);
+          // The API always includes this field (null legitimately means
+          // "unlimited" for a found tier) — don't `?? 3` over a real null.
+          setAvatarChangesAllowed(
+            "avatarChangesAllowed" in tierData ? tierData.avatarChangesAllowed : 3
+          );
           setTierName(tierData.tierName ?? null);
         })
         .catch(() => {});
