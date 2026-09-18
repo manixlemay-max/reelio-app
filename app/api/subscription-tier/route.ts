@@ -12,10 +12,19 @@ export async function GET(req: NextRequest) {
   const tier = sub?.tierId ? TIERS.find((t) => t.id === sub.tierId) : undefined;
 
   if (!tier) {
-    // No matching subscription found yet (e.g. webhook hasn't landed, or
-    // testing without Stripe configured) — fall back to the most generous
-    // limit so we never block a real paying customer.
-    return NextResponse.json({ networksAllowed: 3, avatarChangesAllowed: 3, tierName: null, found: false });
+    // No matching subscription found yet (e.g. the Stripe webhook hasn't
+    // landed right after checkout, or testing without Stripe configured) —
+    // fall back to the LOWEST tier's limits, not the most generous. Doing
+    // the opposite let a client pick more avatars/networks than their real
+    // plan allows in this brief window, only to be rejected once the real
+    // subscription resolves a few seconds later.
+    const lowest = TIERS[0];
+    return NextResponse.json({
+      networksAllowed: lowest.networksAllowed,
+      avatarChangesAllowed: lowest.avatarChangesAllowed,
+      tierName: null,
+      found: false,
+    });
   }
 
   return NextResponse.json({

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Video, CalendarClock, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Package, Video, CalendarClock, BarChart3, CreditCard } from "lucide-react";
 import { getLeadByToken } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -22,6 +22,7 @@ export default async function ClientDashboardLayout({
     { href: `${base}/videos`, label: "Videos", icon: Video },
     { href: `${base}/schedule`, label: "Schedule", icon: CalendarClock },
     { href: `${base}/analytics`, label: "Analytics", icon: BarChart3 },
+    { href: `${base}/subscription`, label: "Subscription", icon: CreditCard },
   ];
 
   return (

@@ -1,7 +1,6 @@
 import { getLeadByToken, getClientReport, listSupportRequestsByLead, getSubscriptionByEmail } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import CancelSubscription from "@/components/CancelSubscription";
 import NeedHelp from "@/components/NeedHelp";
 import AvatarPicker from "@/components/AvatarPicker";
 import VideoNotes from "@/components/VideoNotes";
@@ -111,10 +110,8 @@ export default async function ClientOverviewPage({ params }: { params: Promise<{
         <VideoNotes token={token} initialNotes={lead.videoNotes} initialCaptionsEnabled={lead.captionsEnabled} />
       </div>
 
-      <div className="mt-6 pt-6 border-t border-neutral-800 flex flex-wrap items-start gap-3">
+      <div className="mt-6 pt-6 border-t border-neutral-800">
         <NeedHelp token={token} />
-        <span className="text-neutral-700">&middot;</span>
-        <CancelSubscription token={token} />
       </div>
     </div>
   );

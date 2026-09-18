@@ -27,9 +27,17 @@ export default async function ClientProductsPage({ params }: { params: Promise<{
       ) : (
         <ul className="space-y-3">
           {products.map((p) => (
-            <li key={p.id} className="rounded-xl border border-neutral-800 p-4">
-              <p className="font-medium text-sm">{p.name}</p>
-              <p className="text-sm text-neutral-500">{p.description}</p>
+            <li key={p.id} className="rounded-xl border border-neutral-800 p-4 flex items-center gap-4">
+              {p.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.imageUrl} alt={p.name} className="w-14 h-14 rounded-lg object-cover border border-neutral-800 shrink-0" />
+              ) : (
+                <div className="w-14 h-14 rounded-lg bg-neutral-900 border border-neutral-800 shrink-0" />
+              )}
+              <div>
+                <p className="font-medium text-sm">{p.name}</p>
+                <p className="text-sm text-neutral-500">{p.description}</p>
+              </div>
             </li>
           ))}
         </ul>
